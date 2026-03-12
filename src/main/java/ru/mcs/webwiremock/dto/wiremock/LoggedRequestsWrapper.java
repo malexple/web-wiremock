@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LoggedRequestsWrapper {
-    private List<LoggedRequest> requests;
+    private List<ServeEvent> requests;
     private Meta meta;
     private Boolean requestJournalDisabled;
 }

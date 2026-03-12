@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import ru.mcs.webwiremock.dto.ui.ApiResponse;
-import ru.mcs.webwiremock.dto.wiremock.LoggedRequest;
+import ru.mcs.webwiremock.dto.wiremock.ServeEvent;
 import ru.mcs.webwiremock.service.RequestLogService;
 
 import java.util.List;
@@ -31,17 +31,17 @@ public class RequestLogController {
             @RequestParam(required = false, defaultValue = "false") boolean unmatched,
             Model model) {
 
-        List<LoggedRequest> requests;
+        List<ServeEvent> events;
         if (unmatched) {
-            requests = requestLogService.getUnmatchedRequests();
+            events = requestLogService.getUnmatchedRequests();
         } else if (sinceMinutes != null && sinceMinutes > 0) {
-            requests = requestLogService.getRequestsSince(sinceMinutes);
+            events = requestLogService.getRequestsSince(sinceMinutes);
         } else {
-            requests = requestLogService.getRecentRequests(null);
+            events = requestLogService.getRecentRequests(null);
         }
 
-        List<LoggedRequest> filtered = requestLogService
-                .filterRequests(requests, method, urlContains, bodyContains);
+        List<ServeEvent> filtered = requestLogService
+                .filterRequests(events, method, urlContains, bodyContains);
 
         model.addAttribute("requests", filtered);
         model.addAttribute("totalCount", filtered.size());
@@ -56,20 +56,18 @@ public class RequestLogController {
 
     @GetMapping("/data")
     @ResponseBody
-    public ResponseEntity<ApiResponse<List<LoggedRequest>>> getRequestsData(
+    public ResponseEntity<ApiResponse<List<ServeEvent>>> getRequestsData(
             @RequestParam(required = false) Integer sinceMinutes,
             @RequestParam(required = false) String method,
             @RequestParam(required = false) String urlContains,
             @RequestParam(required = false) String bodyContains) {
 
-        List<LoggedRequest> requests = sinceMinutes != null
+        List<ServeEvent> events = sinceMinutes != null
                 ? requestLogService.getRequestsSince(sinceMinutes)
                 : requestLogService.getRecentRequests(null);
 
-        List<LoggedRequest> filtered = requestLogService
-                .filterRequests(requests, method, urlContains, bodyContains);
-
-        return ResponseEntity.ok(ApiResponse.ok(filtered));
+        return ResponseEntity.ok(ApiResponse.ok(
+                requestLogService.filterRequests(events, method, urlContains, bodyContains)));
     }
 
     @DeleteMapping

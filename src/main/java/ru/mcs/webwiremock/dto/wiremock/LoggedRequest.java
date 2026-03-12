@@ -4,10 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import java.util.Map;
 
+/**
+ * Внутренний объект запроса внутри ServeEvent.
+ * WireMock структура: ServeEvent.request → LoggedRequest
+ */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LoggedRequest {
-    private String id;
     private String url;
     private String absoluteUrl;
     private String method;
@@ -15,15 +18,8 @@ public class LoggedRequest {
     private Map<String, String> headers;
     private Map<String, String> cookies;
     private String body;
-    private Boolean browserProxyRequest;
+    private String bodyAsBase64;
     private Long loggedDate;
     private String loggedDateString;
-    private Boolean wasMatched;
-
-    /**
-     * WireMock возвращает {"id": "stub-uuid"} — используем Map для гибкости
-     */
-    private Map<String, String> matchedStubId;
-
-    private RequestTiming timing;
+    private Boolean browserProxyRequest;
 }

@@ -170,11 +170,19 @@ body { font-size: 0.875rem; }
 /* ─── Requests table ──────────────────────────────────────────── */
 .requests-table-pane {
     width: 55%;
-    min-width: 300px;
+    min-width: 320px;
     flex-shrink: 0;
 }
 
+/* Убираем max-width:0 — он схлопывал колонку URL */
+.req-url-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .request-row { cursor: pointer; }
+.request-row:hover { background-color: #f0f4ff !important; }
 .request-row.selected { background: #cfe2ff !important; }
 
 /* ─── Toast ───────────────────────────────────────────────────── */

@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.mcs.webwiremock.client.WiremockAdminClient;
-import ru.mcs.webwiremock.dto.wiremock.LoggedRequest;
 import ru.mcs.webwiremock.dto.wiremock.LoggedRequestsWrapper;
+import ru.mcs.webwiremock.dto.wiremock.ServeEvent;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -21,20 +21,20 @@ public class RequestLogService {
 
     private final WiremockAdminClient wiremockAdminClient;
 
-    public List<LoggedRequest> getRecentRequests(Integer limit) {
+    public List<ServeEvent> getRecentRequests(Integer limit) {
         int effectiveLimit = (limit != null && limit > 0) ? limit : DEFAULT_LIMIT;
         LoggedRequestsWrapper wrapper = wiremockAdminClient.getRequests(effectiveLimit, null);
         return wrapper.getRequests() != null ? wrapper.getRequests() : Collections.emptyList();
     }
 
-    public List<LoggedRequest> getRequestsSince(int sinceMinutesAgo) {
+    public List<ServeEvent> getRequestsSince(int sinceMinutesAgo) {
         String since = DateTimeFormatter.ISO_INSTANT
                 .format(Instant.now().minusSeconds((long) sinceMinutesAgo * 60));
         LoggedRequestsWrapper wrapper = wiremockAdminClient.getRequests(DEFAULT_LIMIT, since);
         return wrapper.getRequests() != null ? wrapper.getRequests() : Collections.emptyList();
     }
 
-    public List<LoggedRequest> getUnmatchedRequests() {
+    public List<ServeEvent> getUnmatchedRequests() {
         LoggedRequestsWrapper wrapper = wiremockAdminClient.getUnmatchedRequests();
         return wrapper.getRequests() != null ? wrapper.getRequests() : Collections.emptyList();
     }
@@ -46,23 +46,22 @@ public class RequestLogService {
 
     /**
      * Фильтрация на стороне нашего сервиса.
-     * WireMock Admin API не поддерживает серверную фильтрацию по методу / URL / телу.
-     *
-     * @param method       HTTP-метод (GET, POST и т.д.), null = без фильтра
-     * @param urlContains  подстрока в URL, null = без фильтра
-     * @param bodyContains подстрока в теле запроса, null = без фильтра
+     * Обращаемся к полям через event.getRequest().getXxx()
      */
-    public List<LoggedRequest> filterRequests(List<LoggedRequest> requests,
-                                              String method,
-                                              String urlContains,
-                                              String bodyContains) {
-        return requests.stream()
-                .filter(r -> isBlank(method)
-                        || method.equalsIgnoreCase(r.getMethod()))
-                .filter(r -> isBlank(urlContains)
-                        || (r.getUrl() != null && r.getUrl().contains(urlContains)))
-                .filter(r -> isBlank(bodyContains)
-                        || (r.getBody() != null && r.getBody().contains(bodyContains)))
+    public List<ServeEvent> filterRequests(List<ServeEvent> events,
+                                           String method,
+                                           String urlContains,
+                                           String bodyContains) {
+        return events.stream()
+                .filter(e -> isBlank(method)
+                        || (e.getRequest() != null
+                        && method.equalsIgnoreCase(e.getRequest().getMethod())))
+                .filter(e -> isBlank(urlContains)
+                        || (e.getRequest() != null && e.getRequest().getUrl() != null
+                        && e.getRequest().getUrl().contains(urlContains)))
+                .filter(e -> isBlank(bodyContains)
+                        || (e.getRequest() != null && e.getRequest().getBody() != null
+                        && e.getRequest().getBody().contains(bodyContains)))
                 .toList();
     }
 

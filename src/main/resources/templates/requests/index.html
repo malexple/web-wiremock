@@ -78,14 +78,22 @@
         </div>
 
         <div class="overflow-y-auto flex-grow-1">
-            <table class="table table-sm table-hover mb-0" id="requestsTable">
+            <table class="table table-sm table-hover mb-0 w-100" id="requestsTable"
+                   style="table-layout:fixed">
+                <colgroup>
+                    <col style="width:95px"/>   <!-- Метод -->
+                    <col/>                       <!-- URL — занимает всё остальное -->
+                    <col style="width:70px"/>   <!-- Match -->
+                    <col style="width:155px"/>  <!-- Время -->
+                    <col style="width:75px"/>   <!-- Длит. -->
+                </colgroup>
                 <thead class="table-dark sticky-top">
                 <tr>
-                    <th style="width:90px">Метод</th>
+                    <th>Метод</th>
                     <th>URL</th>
-                    <th style="width:70px" class="text-center">Match</th>
-                    <th style="width:150px">Время</th>
-                    <th style="width:75px">Длит.</th>
+                    <th class="text-center">Match</th>
+                    <th>Время</th>
+                    <th>Длит.</th>
                 </tr>
                 </thead>
                 <tbody id="requestsBody">
@@ -95,30 +103,35 @@
                         Нет запросов
                     </td>
                 </tr>
-                <tr th:each="req : ${requests}"
+                <tr th:each="evt : ${requests}"
                     class="request-row"
-                    th:attr="data-id=${req.id}"
-                    th:classappend="${!req.wasMatched} ? 'table-warning' : ''">
+                    th:attr="data-id=${evt.id}"
+                    th:classappend="${!evt.wasMatched} ? 'table-warning' : ''">
                     <td>
-                        <span th:with="mc=${req.method == 'GET'     ? 'bg-success'
-                                         : req.method == 'POST'    ? 'bg-primary'
-                                         : req.method == 'PUT'     ? 'bg-warning text-dark'
-                                         : req.method == 'DELETE'  ? 'bg-danger'
-                                         : req.method == 'PATCH'   ? 'bg-info text-dark'
-                                         : 'bg-secondary'}"
-                              class="badge" th:classappend="${mc}" th:text="${req.method}">
-                        </span>
+        <span th:with="mc=${evt.request?.method == 'GET'    ? 'bg-success'
+                         : evt.request?.method == 'POST'   ? 'bg-primary'
+                         : evt.request?.method == 'PUT'    ? 'bg-warning text-dark'
+                         : evt.request?.method == 'DELETE' ? 'bg-danger'
+                         : evt.request?.method == 'PATCH'  ? 'bg-info text-dark'
+                         : 'bg-secondary'}"
+              class="badge" th:classappend="${mc}"
+              th:text="${evt.request?.method ?: '?'}">
+        </span>
                     </td>
-                    <td class="font-monospace small req-url-cell"
-                        th:text="${req.url}" style="max-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    <td class="font-monospace small"
+                        style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                        th:text="${evt.request?.url ?: ''}">
                     </td>
                     <td class="text-center">
-                        <i th:if="${req.wasMatched}"   class="bi bi-check-circle-fill text-success"></i>
-                        <i th:unless="${req.wasMatched}" class="bi bi-x-circle-fill text-warning"></i>
+                        <i th:if="${evt.wasMatched}"    class="bi bi-check-circle-fill text-success"></i>
+                        <i th:unless="${evt.wasMatched}" class="bi bi-x-circle-fill text-warning"></i>
                     </td>
-                    <td class="small text-muted" th:text="${req.loggedDateString}"></td>
+                    <td class="small text-muted"
+                        style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                        th:text="${evt.request?.loggedDateString ?: ''}">
+                    </td>
                     <td class="small text-muted font-monospace"
-                        th:text="${req.timing != null} ? ${req.timing.totalTime + ' мс'} : '—'">
+                        th:text="${evt.timing != null} ? ${evt.timing.totalTime + ' мс'} : '—'">
                     </td>
                 </tr>
                 </tbody>

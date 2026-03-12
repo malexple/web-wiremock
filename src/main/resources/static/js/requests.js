@@ -28,56 +28,55 @@ function initRowClick() {
 }
 
 // ─── Render full detail ───────────────────────────────────────
-function renderDetail(req) {
+function renderDetail(evt) {
+    // evt — это ServeEvent: { id, request: {...}, wasMatched, timing, matchedStubId }
+    const req = evt.request || {};
+
     document.getElementById('reqEmptyState').classList.add('d-none');
     document.getElementById('reqDetailContent').classList.remove('d-none');
 
     // Метод + URL
     const badge = document.getElementById('reqMethodBadge');
     badge.textContent = req.method || '?';
-    badge.className = 'badge fs-6 flex-shrink-0 ' + methodBadgeClass(req.method);
+    badge.className   = 'badge fs-6 flex-shrink-0 ' + methodBadgeClass(req.method);
     document.getElementById('reqUrl').textContent = req.absoluteUrl || req.url || '';
 
     // Мета
     document.getElementById('reqDate').textContent    = req.loggedDateString || '—';
     document.getElementById('reqIp').textContent      = req.clientIp || '—';
     document.getElementById('reqTimingVal').textContent =
-        req.timing ? `${req.timing.totalTime} мс` : '—';
+        evt.timing ? `${evt.timing.totalTime} мс` : '—';
 
     // Matched / Unmatched
     const matchedBlock   = document.getElementById('reqMatchedBlock');
     const unmatchedBadge = document.getElementById('reqUnmatchedBadge');
-    if (req.wasMatched && req.matchedStubId?.id) {
+    if (evt.wasMatched && evt.matchedStubId?.id) {
         matchedBlock.classList.remove('d-none');
         unmatchedBadge.classList.add('d-none');
         const link = document.getElementById('reqMatchedLink');
-        link.textContent = req.matchedStubId.id;
-        link.href = `/stubs?selectedId=${req.matchedStubId.id}`;
+        link.textContent = evt.matchedStubId.id;
+        link.href = `/stubs?selectedId=${evt.matchedStubId.id}`;
     } else {
         matchedBlock.classList.add('d-none');
-        unmatchedBadge.classList.toggle('d-none', !!req.wasMatched);
+        unmatchedBadge.classList.toggle('d-none', !!evt.wasMatched);
     }
 
-    // ── Headers ──
-    const headersBody = document.getElementById('reqHeadersBody');
-    const headers = req.headers || {};
-    const headerEntries = Object.entries(headers);
+    // Headers
+    const headersBody    = document.getElementById('reqHeadersBody');
+    const headerEntries  = Object.entries(req.headers || {});
     document.getElementById('reqHeadersCount').textContent = headerEntries.length || '';
-    if (headerEntries.length === 0) {
-        headersBody.innerHTML = '<tr><td colspan="2" class="text-muted small">Нет заголовков</td></tr>';
-    } else {
-        headersBody.innerHTML = headerEntries
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([k, v]) => `
+    headersBody.innerHTML = headerEntries.length === 0
+        ? '<tr><td colspan="2" class="text-muted small">Нет заголовков</td></tr>'
+        : headerEntries.sort(([a],[b]) => a.localeCompare(b))
+            .map(([k,v]) => `
                 <tr>
-                    <td class="font-monospace small text-info fw-semibold">${escHtml(k)}</td>
-                    <td class="font-monospace small text-break">${escHtml(String(v))}</td>
-                </tr>`)
-            .join('');
-    }
+                  <td class="font-monospace small text-info fw-semibold">${escHtml(k)}</td>
+                  <td class="font-monospace small text-break">${escHtml(String(v))}</td>
+                </tr>`).join('');
 
-    // ── Body ──
+    // Body
     const bodyContent = document.getElementById('reqBodyContent');
+    bodyContent.style.color = '';
     if (req.body && req.body.trim()) {
         bodyContent.textContent = tryBeautify(req.body);
     } else {
@@ -85,26 +84,20 @@ function renderDetail(req) {
         bodyContent.style.color = '#6c757d';
     }
 
-    // ── Timing ──
-    renderTiming(req.timing);
+    // Timing — данные из evt.timing (верхний уровень ServeEvent)
+    renderTiming(evt.timing);
 
-    // ── Cookies ──
-    const cookiesBody = document.getElementById('reqCookiesBody');
-    const cookies = req.cookies || {};
-    const cookieEntries = Object.entries(cookies);
-    if (cookieEntries.length === 0) {
-        cookiesBody.innerHTML = '<tr><td colspan="2" class="text-muted small">Нет cookies</td></tr>';
-    } else {
-        cookiesBody.innerHTML = cookieEntries
-            .map(([k, v]) => `
-                <tr>
-                    <td class="font-monospace small text-info">${escHtml(k)}</td>
-                    <td class="font-monospace small">${escHtml(String(v))}</td>
-                </tr>`)
-            .join('');
-    }
+    // Cookies
+    const cookiesBody   = document.getElementById('reqCookiesBody');
+    const cookieEntries = Object.entries(req.cookies || {});
+    cookiesBody.innerHTML = cookieEntries.length === 0
+        ? '<tr><td colspan="2" class="text-muted small">Нет cookies</td></tr>'
+        : cookieEntries.map(([k,v]) => `
+            <tr>
+              <td class="font-monospace small text-info">${escHtml(k)}</td>
+              <td class="font-monospace small">${escHtml(String(v))}</td>
+            </tr>`).join('');
 
-    // Сбрасываем на первую вкладку
     switchReqTab('headers');
 }
 
@@ -228,8 +221,11 @@ function rebuildTable(requests) {
         return;
     }
     const methodColors = {
-        GET: 'bg-success', POST: 'bg-primary', PUT: 'bg-warning text-dark',
-        DELETE: 'bg-danger', PATCH: 'bg-info text-dark'
+        GET:    'bg-success',
+        POST:   'bg-primary',
+        PUT:    'bg-warning text-dark',
+        DELETE: 'bg-danger',
+        PATCH:  'bg-info text-dark'
     };
     tbody.innerHTML = requests.map(r => {
         const cls     = methodColors[r.method] || 'bg-secondary';
@@ -240,9 +236,15 @@ function rebuildTable(requests) {
         const warn  = !r.wasMatched ? 'table-warning' : '';
         return `<tr class="request-row ${warn}" data-id="${r.id}">
             <td><span class="badge ${cls}">${r.method}</span></td>
-            <td class="font-monospace small req-url-cell">${escHtml(r.url || '')}</td>
+            <td class="font-monospace small"
+                style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${escHtml(r.url || '')}
+            </td>
             <td class="text-center">${matched}</td>
-            <td class="small text-muted">${r.loggedDateString || ''}</td>
+            <td class="small text-muted"
+                style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${r.loggedDateString || ''}
+            </td>
             <td class="small text-muted font-monospace">${total}</td>
         </tr>`;
     }).join('');
