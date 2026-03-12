@@ -1,0 +1,181 @@
+/* ─── Layout ─────────────────────────────────────────────────── */
+:root {
+    --sidebar-width: 320px;
+    --navbar-height: 44px;
+    --filter-bar-height: 50px;
+    --splitter-width: 5px;
+    --tree-bg: #f8f9fa;
+    --border-color: #dee2e6;
+    --method-any-color: #6f42c1;
+    --json-bg: #1e1e1e;
+    --json-color: #d4d4d4;
+}
+
+body { font-size: 0.875rem; }
+
+.app-navbar { height: var(--navbar-height); min-height: var(--navbar-height); }
+
+.filter-bar {
+    height: var(--filter-bar-height);
+    min-height: var(--filter-bar-height);
+    background: #fff;
+}
+.filter-select { min-width: 160px; max-width: 220px; }
+.filter-input  { min-width: 180px; max-width: 260px; }
+
+/* ─── Tree sidebar ────────────────────────────────────────────── */
+.tree-sidebar {
+    width: var(--sidebar-width);
+    min-width: 180px;
+    max-width: 520px;
+    background: var(--tree-bg);
+    flex-shrink: 0;
+}
+.tree-header { background: var(--tree-bg); }
+
+/* Splitter — перетаскиваемый разделитель */
+.tree-splitter {
+    width: var(--splitter-width);
+    background: var(--border-color);
+    cursor: col-resize;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+.tree-splitter:hover,
+.tree-splitter.dragging { background: #0d6efd; }
+
+/* ─── API Tree nodes ──────────────────────────────────────────── */
+.tree-node { user-select: none; }
+
+.tree-node-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 0.8125rem;
+    transition: background 0.1s;
+}
+.tree-node-row:hover        { background: #e9ecef; }
+.tree-node-row.selected     { background: #cfe2ff; color: #0a58ca; font-weight: 600; }
+
+.tree-segment { color: #495057; overflow: hidden; text-overflow: ellipsis; }
+
+/* Цвета бейджей методов */
+.badge-method { font-size: 0.65rem; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
+.badge-GET     { background: #198754; color: #fff; }
+.badge-POST    { background: #0d6efd; color: #fff; }
+.badge-PUT     { background: #fd7e14; color: #fff; }
+.badge-DELETE  { background: #dc3545; color: #fff; }
+.badge-PATCH   { background: #0dcaf0; color: #000; }
+.badge-HEAD    { background: #6c757d; color: #fff; }
+.badge-OPTIONS { background: #6c757d; color: #fff; }
+.badge-ANY     { background: var(--method-any-color); color: #fff; outline: 2px solid #b392e0; }
+
+/* Отступ дочерних узлов */
+.tree-children { padding-left: 16px; border-left: 1px dashed #ced4da; margin-left: 10px; }
+
+/* Иконка-треугольник сворачивания */
+.tree-toggle { font-size: 0.6rem; color: #adb5bd; transition: transform 0.15s; flex-shrink: 0; }
+.tree-toggle.open { transform: rotate(90deg); }
+
+/* ─── Detail panel ────────────────────────────────────────────── */
+.stub-action-bar { background: #fff; min-height: 46px; }
+
+/* JSON editor */
+.json-editor {
+    background: var(--json-bg);
+    color: var(--json-color);
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+    tab-size: 2;
+    font-size: 0.8rem;
+}
+.json-editor:focus { box-shadow: none; }
+
+/* Response body (read-only) */
+.response-body {
+    background: var(--json-bg);
+    color: var(--json-color);
+    max-height: 400px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-size: 0.78rem;
+}
+
+/* Nav tabs tight */
+.nav-tabs-sm .nav-link {
+    font-size: 0.8125rem;
+    padding: 5px 12px;
+}
+
+.tab-content-panel { overflow: hidden; }
+
+/* ─── Run Test ────────────────────────────────────────────────── */
+.method-select { width: 110px; }
+
+#rtHeadersContainer .header-row,
+#queryParamsContainer .param-row,
+#requestHeadersContainer .header-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+}
+
+.kv-key   { width: 180px; flex-shrink: 0; }
+.kv-op    { width: 160px; flex-shrink: 0; }
+.kv-value { flex-grow: 1; }
+
+/* Status badge */
+.status-2xx { background: #198754; color: #fff; }
+.status-3xx { background: #0dcaf0; color: #000; }
+.status-4xx { background: #fd7e14; color: #fff; }
+.status-5xx { background: #dc3545; color: #fff; }
+.status-0xx { background: #6c757d; color: #fff; }
+
+/* ─── Wizard ──────────────────────────────────────────────────── */
+.wizard-steps-bar { gap: 0; overflow-x: auto; padding-bottom: 4px; }
+
+.wizard-step-bubble {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #dee2e6;
+    color: #6c757d;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+.wizard-step-bubble.active    { background: #0d6efd; color: #fff; }
+.wizard-step-bubble.completed { background: #198754; color: #fff; }
+
+.wizard-step-connector {
+    width: 32px;
+    height: 2px;
+    background: #dee2e6;
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
+/* ─── Requests table ──────────────────────────────────────────── */
+.requests-table-pane {
+    width: 55%;
+    min-width: 300px;
+    flex-shrink: 0;
+}
+
+.request-row { cursor: pointer; }
+.request-row.selected { background: #cfe2ff !important; }
+
+/* ─── Toast ───────────────────────────────────────────────────── */
+.toast { min-width: 280px; }

@@ -1,0 +1,12 @@
+# Профиль активируется при запуске в docker-compose (SPRING_PROFILES_ACTIVE=docker)
+integration:
+  wiremock-host: http://wiremock:8080
+
+spring:
+  thymeleaf:
+    cache: true   # в Docker включаем кеш шаблонов
+
+logging:
+  level:
+    root: WARN
+    ru.mcs.webwiremock: INFO

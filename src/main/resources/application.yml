@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: web-wiremock
+  thymeleaf:
+    cache: false
+    encoding: UTF-8
+    mode: HTML
+  jackson:
+    serialization:
+      indent-output: true
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+
+integration:
+  wiremock-host: http://localhost:8888
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    ru.mcs.webwiremock: DEBUG
+    ru.mcs.webwiremock.client.WiremockAdminClient: DEBUG
+
+feign:
+  client:
+    config:
+      wiremock-admin:
+        logger-level: BASIC
+        connect-timeout: 5000
+        read-timeout: 10000

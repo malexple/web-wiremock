@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Stubs')}"></head>
+<body class="d-flex flex-column vh-100 overflow-hidden">
+
+<nav th:replace="~{fragments/navbar :: navbar('stubs')}"></nav>
+
+<!-- Панель фильтров -->
+<div class="filter-bar border-bottom px-3 py-2 d-flex align-items-center gap-2 flex-wrap">
+    <form method="get" th:action="@{/stubs}" class="d-flex align-items-center gap-2 flex-wrap w-100">
+        <select name="clientId" class="form-select form-select-sm filter-select"
+                title="Клиент">
+            <option value="">Все клиенты</option>
+            <option th:each="c : ${clients}"
+                    th:value="${c.clientId}"
+                    th:text="${c.displayName}"
+                    th:selected="${c.clientId == selectedClientId}">
+            </option>
+        </select>
+
+        <select name="urlPath" class="form-select form-select-sm filter-select"
+                title="Путь API">
+            <option value="">Все пути</option>
+            <option th:each="p : ${allPaths}"
+                    th:value="${p}"
+                    th:text="${p}"
+                    th:selected="${p == selectedUrlPath}">
+            </option>
+        </select>
+
+        <button type="submit" class="btn btn-sm btn-primary">
+            <i class="bi bi-funnel-fill"></i> Фильтр
+        </button>
+        <a th:href="@{/stubs}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Сброс
+        </a>
+
+        <span class="text-muted small ms-2">
+            Стабов: <strong th:text="${totalStubs}">0</strong>
+        </span>
+
+        <div class="ms-auto">
+            <a th:href="@{/stubs/wizard}" class="btn btn-sm btn-success">
+                <i class="bi bi-plus-circle-fill"></i> Новый стаб
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Основная область: дерево + детали -->
+<div class="d-flex flex-row flex-grow-1 overflow-hidden">
+
+    <!-- Боковая панель: дерево API -->
+    <div id="treeSidebar" class="tree-sidebar border-end d-flex flex-column">
+        <div class="tree-header px-3 py-2 border-bottom d-flex align-items-center justify-content-between">
+            <span class="fw-semibold small text-muted text-uppercase">API Tree</span>
+            <div class="d-flex gap-1">
+                <button class="btn btn-link btn-sm p-0 text-muted" id="btnExpandAll" title="Развернуть всё">
+                    <i class="bi bi-arrows-expand"></i>
+                </button>
+                <button class="btn btn-link btn-sm p-0 text-muted" id="btnCollapseAll" title="Свернуть всё">
+                    <i class="bi bi-arrows-collapse"></i>
+                </button>
+            </div>
+        </div>
+        <div id="apiTree" class="flex-grow-1 overflow-y-auto px-2 py-2"></div>
+    </div>
+
+    <!-- Разделитель -->
+    <div id="treeSplitter" class="tree-splitter"></div>
+
+    <!-- Правая панель: детали стаба -->
+    <div id="detailPanel" class="flex-grow-1 d-flex flex-column overflow-hidden">
+
+        <!-- Пустое состояние -->
+        <div id="emptyState" class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+            <i class="bi bi-cursor-text display-4 mb-3 opacity-25"></i>
+            <p>Выберите стаб в дереве слева</p>
+        </div>
+
+        <!-- Панель стаба -->
+        <div id="stubPanel" class="d-none d-flex flex-column h-100">
+
+            <!-- Заголовок стаба + кнопки -->
+            <div class="stub-action-bar px-3 py-2 border-bottom d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
+                    <span id="stubMethodBadge" class="badge"></span>
+                    <span id="stubTitle" class="fw-semibold text-truncate"></span>
+                    <span id="stubIdBadge" class="badge bg-light text-muted font-monospace small"></span>
+                </div>
+                <div class="btn-group btn-group-sm ms-auto flex-shrink-0">
+                    <button class="btn btn-outline-secondary" id="btnBeautify" title="Форматировать JSON">
+                        <i class="bi bi-magic"></i>
+                    </button>
+                    <button class="btn btn-outline-primary" id="btnSave" title="Сохранить изменения">
+                        <i class="bi bi-floppy-fill"></i> Сохранить
+                    </button>
+                    <button class="btn btn-outline-warning" id="btnCreateProxy" title="Создать прокси-стаб">
+                        <i class="bi bi-arrow-left-right"></i> Прокси
+                    </button>
+                    <button class="btn btn-outline-danger" id="btnDelete" title="Удалить стаб">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Вкладки: JSON / Run Test -->
+            <ul class="nav nav-tabs nav-tabs-sm px-3 pt-2 flex-shrink-0" id="stubTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-tab="json">
+                        <i class="bi bi-code-slash"></i> JSON
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-tab="run-test">
+                        <i class="bi bi-play-circle-fill text-success"></i> Run Test
+                    </button>
+                </li>
+            </ul>
+
+            <!-- JSON вкладка -->
+            <div id="tab-json" class="tab-content-panel flex-grow-1 overflow-hidden d-flex flex-column p-0">
+                <textarea id="jsonEditor"
+                          class="json-editor flex-grow-1 font-monospace border-0 p-3"
+                          spellcheck="false"
+                          autocomplete="off"></textarea>
+            </div>
+
+            <!-- Run Test вкладка -->
+            <div id="tab-run-test" class="tab-content-panel flex-grow-1 overflow-y-auto p-3 d-none">
+                <div class="row g-2 mb-2">
+                    <div class="col-auto">
+                        <select id="rtMethod" class="form-select form-select-sm method-select">
+                            <option>GET</option>
+                            <option>POST</option>
+                            <option>PUT</option>
+                            <option>DELETE</option>
+                            <option>PATCH</option>
+                            <option>HEAD</option>
+                            <option>OPTIONS</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input type="text" id="rtUrl" class="form-control form-control-sm font-monospace"
+                               placeholder="http://wiremock:8080/api/..."/>
+                    </div>
+                    <div class="col-auto">
+                        <button id="btnRunTest" class="btn btn-sm btn-success">
+                            <i class="bi bi-play-fill"></i> Execute
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Заголовки -->
+                <div class="mb-2">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="small fw-semibold text-muted">HEADERS</span>
+                        <button class="btn btn-link btn-sm p-0 text-primary" id="btnAddRtHeader">
+                            <i class="bi bi-plus-circle"></i> Добавить
+                        </button>
+                    </div>
+                    <div id="rtHeadersContainer"></div>
+                </div>
+
+                <!-- Тело запроса -->
+                <div class="mb-3" id="rtBodySection">
+                    <div class="small fw-semibold text-muted mb-1">BODY</div>
+                    <textarea id="rtBody" class="form-control font-monospace"
+                              rows="5" placeholder='{"key": "value"}'></textarea>
+                </div>
+
+                <!-- Ответ -->
+                <div id="rtResponseSection" class="d-none">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-semibold text-muted">RESPONSE</span>
+                        <span id="rtDuration" class="badge bg-light text-muted"></span>
+                    </div>
+                    <div id="rtStatusLine" class="mb-2"></div>
+                    <div id="rtResponseHeaders" class="mb-2 small font-monospace text-muted"></div>
+                    <pre id="rtResponseBody" class="response-body border rounded p-2 font-monospace small"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Создать прокси -->
+<div class="modal fade" id="proxyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-arrow-left-right"></i> Создать прокси-стаб</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">
+                    Прокси-стаб перехватит запросы с тем же URL, но <em>без</em> JWT-матчера
+                    и перенаправит их на указанный сервис.
+                </p>
+                <label class="form-label fw-semibold">URL сервиса назначения</label>
+                <input type="text" id="proxyBaseUrl" class="form-control font-monospace"
+                       placeholder="http://real-service:8080"/>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button class="btn btn-primary" id="btnConfirmProxy">
+                    <i class="bi bi-plus-circle"></i> Создать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const APP_DATA = {
+        tree:             /*[[${tree}]]*/ [],
+        clients:          /*[[${clients}]]*/ [],
+        allPaths:         /*[[${allPaths}]]*/ [],
+        wiremockHost:     /*[[${wiremockHost}]]*/ '',
+        selectedStubId:   /*[[${selectedStubId}]]*/ null,
+        selectedClientId: /*[[${selectedClientId}]]*/ null,
+        selectedUrlPath:  /*[[${selectedUrlPath}]]*/ null
+    };
+    /*]]>*/
+</script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/stubs.js}"></script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Новый стаб')}"></head>
+<body class="d-flex flex-column vh-100">
+
+<nav th:replace="~{fragments/navbar :: navbar('stubs')}"></nav>
+
+<div class="container-fluid py-3 flex-grow-1 overflow-y-auto">
+    <div class="row justify-content-center">
+        <div class="col-xl-9 col-xxl-8">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a th:href="@{/stubs}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h4 class="mb-0">
+                    <i class="bi bi-plus-circle-fill text-success me-2"></i>Новый стаб
+                </h4>
+            </div>
+
+            <!-- Шаги -->
+            <div class="d-flex align-items-center mb-4 wizard-steps-bar">
+                <div th:each="step, stat : ${ {'Запрос','Ответ','Query & Headers','Опции','Просмотр'} }"
+                     class="wizard-step-item d-flex align-items-center">
+                    <div class="wizard-step-bubble"
+                         th:attr="data-step=${stat.index}"
+                         th:classappend="${stat.index == 0} ? 'active' : ''">
+                        <span th:text="${stat.index + 1}">1</span>
+                    </div>
+                    <span class="wizard-step-name small mx-2"
+                          th:text="${step}"
+                          th:classappend="${stat.index == 0} ? 'fw-semibold' : 'text-muted'">Шаг</span>
+                    <div th:if="${!stat.last}" class="wizard-step-connector"></div>
+                </div>
+            </div>
+
+            <!-- ШАГ 0: Запрос -->
+            <div class="wizard-panel" id="wizStep0">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold bg-primary bg-opacity-10">
+                        <i class="bi bi-send-fill me-2 text-primary"></i>Запрос
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Название стаба <span class="text-danger">*</span></label>
+                                <input type="text" id="wName" class="form-control"
+                                       placeholder="Например: Get user by ID"/>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Метод</label>
+                                <select id="wMethod" class="form-select">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                    <option value="PATCH">PATCH</option>
+                                    <option value="ANY">ANY</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Тип URL</label>
+                                <select id="wUrlType" class="form-select">
+                                    <option value="urlPath">Точный путь</option>
+                                    <option value="urlPathPattern">Regex пути</option>
+                                    <option value="urlPattern">Regex URL+query</option>
+                                    <option value="url">Точный URL</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">URL <span class="text-danger">*</span></label>
+                                <input type="text" id="wUrl" class="form-control font-monospace"
+                                       placeholder="/api/v1/users/.*"/>
+                            </div>
+
+                            <!-- Клиент -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Клиент (JWT externalId)</label>
+                                <select id="wClientSelect" class="form-select">
+                                    <option value="">— без привязки к клиенту —</option>
+                                    <option th:each="c : ${clients}"
+                                            th:value="${c.clientId}"
+                                            th:text="${c.displayName}"></option>
+                                    <option value="__new__">＋ Новый клиент...</option>
+                                </select>
+                            </div>
+                            <div id="newClientSection" class="col-12 d-none">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">externalId (GUID)</label>
+                                        <input type="text" id="wNewClientId" class="form-control font-monospace"
+                                               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Читаемое имя (опционально)</label>
+                                        <input type="text" id="wNewClientName" class="form-control"
+                                               placeholder="Иванов Иван"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ШАГ 1: Ответ -->
+            <div class="wizard-panel d-none" id="wizStep1">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold bg-success bg-opacity-10">
+                        <i class="bi bi-reply-fill me-2 text-success"></i>Ответ
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">HTTP статус</label>
+                                <select id="wStatus" class="form-select">
+                                    <option value="200">200 OK</option>
+                                    <option value="201">201 Created</option>
+                                    <option value="204">204 No Content</option>
+                                    <option value="400">400 Bad Request</option>
+                                    <option value="401">401 Unauthorized</option>
+                                    <option value="403">403 Forbidden</option>
+                                    <option value="404">404 Not Found</option>
+                                    <option value="422">422 Unprocessable Entity</option>
+                                    <option value="500">500 Internal Server Error</option>
+                                    <option value="503">503 Service Unavailable</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Content-Type</label>
+                                <select id="wContentType" class="form-select">
+                                    <option value="application/json">application/json</option>
+                                    <option value="application/xml">application/xml</option>
+                                    <option value="text/plain">text/plain</option>
+                                    <option value="text/html">text/html</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">Задержка (мс)</label>
+                                <input type="number" id="wDelay" class="form-control"
+                                       placeholder="0" min="0" step="100"/>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <label class="form-label fw-semibold mb-0">Тело ответа</label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" id="wHandlebars"/>
+                                            <label class="form-check-label small text-muted" for="wHandlebars">
+                                                Handlebars-шаблон
+                                            </label>
+                                        </div>
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-muted"
+                                                id="btnBeautifyWizard">
+                                            <i class="bi bi-magic"></i> Форматировать
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea id="wBody" class="form-control font-monospace"
+                                          rows="10"
+                                          placeholder='{"id": 1, "name": "example"}'></textarea>
+                                <div class="mt-1">
+                                    <span id="wBodyError" class="text-danger small d-none">
+                                        <i class="bi bi-exclamation-triangle"></i> Невалидный JSON
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ШАГ 2: Query Parameters & Headers -->
+            <div class="wizard-panel d-none" id="wizStep2">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold bg-warning bg-opacity-10">
+                        <i class="bi bi-question-circle-fill me-2 text-warning"></i>Query Parameters
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-2">
+                            Условия совпадения query-параметров запроса.
+                        </p>
+                        <div id="queryParamsContainer"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2"
+                                id="btnAddQueryParam">
+                            <i class="bi bi-plus-circle"></i> Добавить параметр
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold bg-info bg-opacity-10">
+                        <i class="bi bi-list-columns-reverse me-2 text-info"></i>Заголовки запроса
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-2">
+                            Условия совпадения заголовков входящего запроса.
+                        </p>
+                        <div id="requestHeadersContainer"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2"
+                                id="btnAddRequestHeader">
+                            <i class="bi bi-plus-circle"></i> Добавить заголовок
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ШАГ 3: Прокси -->
+            <div class="wizard-panel d-none" id="wizStep3">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold bg-secondary bg-opacity-10">
+                        <i class="bi bi-arrow-left-right me-2 text-secondary"></i>Прокси-стаб
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">
+                            Опционально: автоматически создать прокси-стаб для этого же URL.
+                            Прокси перехватит запросы <em>без</em> JWT-матчера и перенаправит их на указанный сервис.
+                            Приоритет прокси-стаба будет ниже клиентского.
+                        </p>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="wCreateProxy"/>
+                            <label class="form-check-label fw-semibold" for="wCreateProxy">
+                                Создать прокси-стаб автоматически
+                            </label>
+                        </div>
+
+                        <div id="proxySection" class="d-none">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">URL сервиса назначения</label>
+                                <input type="text" id="wProxyUrl" class="form-control font-monospace"
+                                       placeholder="http://real-service:8080"/>
+                                <div class="form-text">
+                                    WireMock добавит к нему исходный путь запроса.
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Метод прокси-стаба</label>
+                                <select id="wProxyMethod" class="form-select">
+                                    <option value="ANY">ANY (любой)</option>
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ШАГ 4: Просмотр JSON -->
+            <div class="wizard-panel d-none" id="wizStep4">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold bg-dark bg-opacity-10">
+                        <i class="bi bi-code-slash me-2"></i>Итоговый JSON стаба
+                    </div>
+                    <div class="card-body p-0">
+                        <pre id="wPreviewJson"
+                             class="json-editor border-0 m-0 p-3 rounded font-monospace small"></pre>
+                    </div>
+                </div>
+                <div id="wizProxyPreviewCard" class="card shadow-sm mt-3 d-none">
+                    <div class="card-header fw-semibold bg-secondary bg-opacity-10">
+                        <i class="bi bi-arrow-left-right me-2 text-secondary"></i>Итоговый JSON прокси-стаба
+                    </div>
+                    <div class="card-body p-0">
+                        <pre id="wPreviewProxyJson"
+                             class="json-editor border-0 m-0 p-3 rounded font-monospace small"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопки навигации -->
+            <div class="d-flex justify-content-between mt-4">
+                <button id="btnWizBack" class="btn btn-outline-secondary d-none">
+                    <i class="bi bi-chevron-left"></i> Назад
+                </button>
+                <div class="ms-auto d-flex gap-2">
+                    <a th:href="@{/stubs}" class="btn btn-link text-muted">Отмена</a>
+                    <button id="btnWizNext" class="btn btn-primary">
+                        Далее <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button id="btnWizSave" class="btn btn-success d-none">
+                        <i class="bi bi-floppy-fill"></i> Сохранить
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const APP_DATA = {
+        wiremockHost: /*[[${wiremockHost}]]*/ '',
+        clients:      /*[[${clients}]]*/ []
+    };
+    /*]]>*/
+</script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/wizard.js}"></script>
+</body>
+</html>

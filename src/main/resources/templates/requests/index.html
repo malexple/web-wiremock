@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Request Log')}"></head>
+<body class="d-flex flex-column vh-100 overflow-hidden">
+
+<nav th:replace="~{fragments/navbar :: navbar('requests')}"></nav>
+
+<!-- Фильтры -->
+<div class="filter-bar border-bottom px-3 py-2 d-flex align-items-center gap-2 flex-wrap">
+    <form method="get" th:action="@{/requests}"
+          class="d-flex align-items-center gap-2 flex-wrap w-100">
+
+        <select name="sinceMinutes" class="form-select form-select-sm filter-select" title="Период">
+            <option value=""  th:selected="${sinceMinutes == null}">Все записи (до 200)</option>
+            <option value="2"  th:selected="${sinceMinutes == 2}">Последние 2 мин</option>
+            <option value="5"  th:selected="${sinceMinutes == 5}">Последние 5 мин</option>
+            <option value="15" th:selected="${sinceMinutes == 15}">Последние 15 мин</option>
+            <option value="60" th:selected="${sinceMinutes == 60}">Последний час</option>
+        </select>
+
+        <select name="method" class="form-select form-select-sm filter-select" title="HTTP метод">
+            <option value="" th:selected="${filterMethod == null}">Все методы</option>
+            <option th:each="m : ${ {'GET','POST','PUT','DELETE','PATCH','HEAD','OPTIONS'} }"
+                    th:value="${m}" th:text="${m}"
+                    th:selected="${m == filterMethod}"></option>
+        </select>
+
+        <input type="text" name="urlContains"
+               class="form-control form-control-sm filter-input"
+               placeholder="URL содержит..."
+               th:value="${filterUrl}"/>
+
+        <input type="text" name="bodyContains"
+               class="form-control form-control-sm filter-input"
+               placeholder="Тело содержит..."
+               th:value="${filterBody}"/>
+
+        <div class="form-check mb-0 ms-1">
+            <input class="form-check-input" type="checkbox" name="unmatched"
+                   id="chkUnmatched" value="true"
+                   th:checked="${showUnmatched}"/>
+            <label class="form-check-label small" for="chkUnmatched">Unmatched only</label>
+        </div>
+
+        <button type="submit" class="btn btn-sm btn-primary">
+            <i class="bi bi-funnel-fill"></i> Фильтр
+        </button>
+        <a th:href="@{/requests}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Сброс
+        </a>
+
+        <span class="text-muted small ms-1">
+            Записей: <strong th:text="${totalCount}">0</strong>
+        </span>
+
+        <div class="ms-auto d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnRefreshLog">
+                <i class="bi bi-arrow-clockwise"></i> Обновить
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" id="btnClearLog">
+                <i class="bi bi-trash3"></i> Очистить
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Основная область: таблица + детали -->
+<div class="d-flex flex-row flex-grow-1 overflow-hidden">
+
+    <!-- Таблица запросов -->
+    <div id="requestsTablePane" class="requests-table-pane border-end d-flex flex-column">
+
+        <!-- Быстрый поиск по таблице (клиентский, без перезагрузки) -->
+        <div class="px-2 py-2 border-bottom">
+            <input type="text" id="quickSearch"
+                   class="form-control form-control-sm"
+                   placeholder="&#128269; Быстрый поиск по URL / телу..."/>
+        </div>
+
+        <div class="overflow-y-auto flex-grow-1">
+            <table class="table table-sm table-hover mb-0" id="requestsTable">
+                <thead class="table-dark sticky-top">
+                <tr>
+                    <th style="width:90px">Метод</th>
+                    <th>URL</th>
+                    <th style="width:70px" class="text-center">Match</th>
+                    <th style="width:150px">Время</th>
+                    <th style="width:75px">Длит.</th>
+                </tr>
+                </thead>
+                <tbody id="requestsBody">
+                <tr th:if="${#lists.isEmpty(requests)}">
+                    <td colspan="5" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox display-6 d-block mb-2 opacity-25"></i>
+                        Нет запросов
+                    </td>
+                </tr>
+                <tr th:each="req : ${requests}"
+                    class="request-row"
+                    th:attr="data-id=${req.id}"
+                    th:classappend="${!req.wasMatched} ? 'table-warning' : ''">
+                    <td>
+                        <span th:with="mc=${req.method == 'GET'     ? 'bg-success'
+                                         : req.method == 'POST'    ? 'bg-primary'
+                                         : req.method == 'PUT'     ? 'bg-warning text-dark'
+                                         : req.method == 'DELETE'  ? 'bg-danger'
+                                         : req.method == 'PATCH'   ? 'bg-info text-dark'
+                                         : 'bg-secondary'}"
+                              class="badge" th:classappend="${mc}" th:text="${req.method}">
+                        </span>
+                    </td>
+                    <td class="font-monospace small req-url-cell"
+                        th:text="${req.url}" style="max-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    </td>
+                    <td class="text-center">
+                        <i th:if="${req.wasMatched}"   class="bi bi-check-circle-fill text-success"></i>
+                        <i th:unless="${req.wasMatched}" class="bi bi-x-circle-fill text-warning"></i>
+                    </td>
+                    <td class="small text-muted" th:text="${req.loggedDateString}"></td>
+                    <td class="small text-muted font-monospace"
+                        th:text="${req.timing != null} ? ${req.timing.totalTime + ' мс'} : '—'">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Разделитель -->
+    <div id="requestSplitter" class="tree-splitter"></div>
+
+    <!-- Детали запроса -->
+    <div id="requestDetailPane" class="flex-grow-1 d-flex flex-column overflow-hidden">
+
+        <!-- Пустое состояние -->
+        <div id="reqEmptyState"
+             class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+            <i class="bi bi-cursor-text display-4 mb-3 opacity-25"></i>
+            <p class="mb-0">Выберите запрос в таблице слева</p>
+        </div>
+
+        <!-- Панель деталей -->
+        <div id="reqDetailContent" class="d-none d-flex flex-column h-100">
+
+            <!-- Строка метод + URL -->
+            <div class="px-3 py-2 border-bottom bg-light d-flex align-items-start gap-2 flex-wrap">
+                <span id="reqMethodBadge" class="badge fs-6 flex-shrink-0"></span>
+                <span id="reqUrl" class="font-monospace fw-semibold text-break flex-grow-1"></span>
+            </div>
+
+            <!-- Мета-строка -->
+            <div class="px-3 py-1 border-bottom d-flex align-items-center gap-3 flex-wrap bg-white"
+                 style="font-size:0.78rem">
+                <span class="text-muted">
+                    <i class="bi bi-clock me-1"></i><span id="reqDate"></span>
+                </span>
+                <span class="text-muted">
+                    <i class="bi bi-geo-alt me-1"></i><span id="reqIp"></span>
+                </span>
+                <span id="reqTimingMeta" class="text-muted">
+                    <i class="bi bi-speedometer2 me-1"></i><span id="reqTimingVal"></span>
+                </span>
+                <span id="reqMatchedBlock" class="d-none">
+                    <i class="bi bi-link-45deg text-success me-1"></i>
+                    Стаб: <a id="reqMatchedLink" href="#" class="font-monospace small text-success"></a>
+                </span>
+                <span id="reqUnmatchedBadge" class="d-none badge bg-warning text-dark">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Unmatched
+                </span>
+            </div>
+
+            <!-- Вкладки -->
+            <ul class="nav nav-tabs nav-tabs-sm px-3 pt-2 flex-shrink-0 bg-white" id="reqTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-req-tab="headers">
+                        <i class="bi bi-list-columns-reverse me-1"></i>Headers
+                        <span id="reqHeadersCount" class="badge bg-secondary ms-1" style="font-size:0.65rem"></span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-req-tab="body">
+                        <i class="bi bi-code-slash me-1"></i>Body
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-req-tab="timing">
+                        <i class="bi bi-graph-up me-1"></i>Timing
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-req-tab="cookies">
+                        <i class="bi bi-cookie me-1"></i>Cookies
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Содержимое вкладок -->
+            <div class="flex-grow-1 overflow-y-auto">
+
+                <!-- Headers -->
+                <div id="req-tab-headers" class="p-3">
+                    <table class="table table-sm table-striped table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width:40%">Header</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tbody id="reqHeadersBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Body -->
+                <div id="req-tab-body" class="p-3 d-none">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small fw-semibold text-muted">REQUEST BODY</span>
+                        <button class="btn btn-link btn-sm p-0 text-muted" id="btnBeautifyReqBody">
+                            <i class="bi bi-magic"></i> Форматировать
+                        </button>
+                    </div>
+                    <pre id="reqBodyContent"
+                         class="response-body border rounded p-3 font-monospace"
+                         style="min-height:120px; white-space:pre-wrap; word-break:break-all;"></pre>
+                </div>
+
+                <!-- Timing -->
+                <div id="req-tab-timing" class="p-3 d-none">
+                    <div id="reqTimingContent">
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody id="reqTimingBody"></tbody>
+                        </table>
+                        <!-- Визуальная полоска тайминга -->
+                        <div id="reqTimingBar" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <!-- Cookies -->
+                <div id="req-tab-cookies" class="p-3 d-none">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width:40%">Cookie</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tbody id="reqCookiesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+<!--
+    Передаём все данные запросов в JS — полный объект, включая headers, body, timing.
+    Используем #strings.escapeJavaScript чтобы избежать XSS / синтаксических проблем.
+-->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const APP_DATA = {
+        requests: /*[[${requests}]]*/ []
+    };
+    /*]]>*/
+</script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/requests.js}"></script>
+</body>
+</html>
