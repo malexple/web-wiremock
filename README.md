@@ -117,3 +117,26 @@ services:
       INTEGRATION_PROFILES_DIR: /data/profiles
     volumes:
       - ./wiremock/profiles:/data/profiles
+```
+
+## Конфигурация
+| Параметр                  | По умолчанию          | Описание                      |
+| ------------------------- | --------------------- | ----------------------------- |
+| integration.wiremock-host | http://localhost:8888 | Базовый URL WireMock          |
+| integration.profiles-dir  | ./wiremock/profiles   | Папка для сохранения профилей |
+
+## 🏗️ Технологии
+| Уровень     | Технология                              |
+| ----------- | --------------------------------------- |
+| Backend     | Java 21, Spring Boot 3, OpenFeign       |
+| Frontend    | Thymeleaf, Bootstrap 5, Bootstrap Icons |
+| Mock-движок | WireMock 3                              |
+| Сборка      | Maven                                   |
+
+## 🤝 Участие в разработке
+Pull request-ы приветствуются. Для крупных изменений сначала открой issue.
+
+
+## ☕ Поддержать проект
+Если Web WireMock экономит тебе время — поддержи дальнейшее развитие:
+boosty.to/malexple

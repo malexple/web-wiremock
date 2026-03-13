@@ -116,3 +116,26 @@ services:
       INTEGRATION_PROFILES_DIR: /data/profiles
     volumes:
       - ./wiremock/profiles:/data/profiles
+```
+
+## Configuration
+
+| Property                  | Default               | Description                  |
+| ------------------------- | --------------------- | ---------------------------- |
+| integration.wiremock-host | http://localhost:8888 | WireMock base URL            |
+| integration.profiles-dir  | ./wiremock/profiles   | Directory for saved profiles |
+
+## 🏗️ Tech Stack
+Layer	Technology
+Layer	Technology
+Backend	Java 21, Spring Boot 3, OpenFeign
+Frontend	Thymeleaf, Bootstrap 5, Bootstrap Icons
+Mock engine	WireMock 3
+Build	Maven
+
+## 🤝 Contributing
+Pull requests are welcome. For major changes please open an issue first.
+
+## ☕ Support the project
+If Web WireMock saves you time — consider supporting further development:
+boosty.to/malexple
