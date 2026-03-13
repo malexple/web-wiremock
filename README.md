@@ -139,4 +139,4 @@ Pull request-ы приветствуются. Для крупных измене
 
 ## ☕ Поддержать проект
 Если Web WireMock экономит тебе время — поддержи дальнейшее развитие:
-boosty.to/malexple
+[boosty.to/malexple](https://boosty.to/malexple)

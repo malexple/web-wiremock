@@ -138,4 +138,4 @@ Pull requests are welcome. For major changes please open an issue first.
 
 ## ☕ Support the project
 If Web WireMock saves you time — consider supporting further development:
-boosty.to/malexple
+[boosty.to/malexple](https://boosty.to/malexple)
