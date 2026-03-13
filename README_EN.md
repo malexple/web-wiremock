@@ -3,7 +3,7 @@
 > A beautiful web UI for managing [WireMock](https://wiremock.org/) stubs —
 > designed for testers and developers who want full control without touching JSON files manually.
 
-![Stubs Page](.assets/stubs.jpg)
+![Stubs Page](./.assets/stubs.jpg)
 
 ---
 
@@ -27,7 +27,7 @@
 
 Tree view with grouping by service, HTTP method badges, priority and stub detail panel.
 
-![Stubs](.assets/stubs.jpg)
+![Stubs](./.assets/stubs.jpg)
 
 ---
 
@@ -35,7 +35,7 @@ Tree view with grouping by service, HTTP method badges, priority and stub detail
 
 Execute a real request to WireMock right from the stub card and instantly see status, headers and body.
 
-![Run Test](.assets/run_test.jpg)
+![Run Test](./.assets/run_test.jpg)
 
 ---
 
@@ -43,34 +43,34 @@ Execute a real request to WireMock right from the stub card and instantly see st
 
 Set stub name, HTTP method, URL match type and optionally bind to a specific JWT client.
 
-![New Stub — Request](.assets/new_stub_1.jpg)
+![New Stub — Request](./.assets/new_stub_1.jpg)
 
 ---
 
 ### Editing a stub
 
 #### Step 1 · Request
-![Edit — Request](.assets/edit_stub_1.jpg)
+![Edit — Request](./.assets/edit_stub_1.jpg)
 
 #### Step 2 · Response
 Configure HTTP status, Content-Type, response delay and body (plain JSON or Handlebars template).
 
-![Edit — Response](.assets/edit_stub_2.jpg)
+![Edit — Response](./.assets/edit_stub_2.jpg)
 
 #### Step 3 · Query Parameters & Headers
 Add request matching conditions on query params and incoming headers.
 
-![Edit — Query & Headers](.assets/edit_stub_3.jpg)
+![Edit — Query & Headers](./.assets/edit_stub_3.jpg)
 
 #### Step 4 · Options — Proxy stub
 Optionally auto-create a proxy stub for the same URL that forwards requests without JWT matching.
 
-![Edit — Options](.assets/edit_stub_4.jpg)
+![Edit — Options](./.assets/edit_stub_4.jpg)
 
 #### Step 5 · Preview
 Review the final WireMock JSON before saving.
 
-![Edit — Preview](.assets/edit_stub_5.jpg)
+![Edit — Preview](./.assets/edit_stub_5.jpg)
 
 ---
 
@@ -78,7 +78,7 @@ Review the final WireMock JSON before saving.
 
 Full request history: URL, method, match status, timing, headers, body, cookies and matched stub link.
 
-![Requests](.assets/requests.jpg)
+![Requests](./.assets/requests.jpg)
 
 ---
 
@@ -87,7 +87,7 @@ Full request history: URL, method, match status, timing, headers, body, cookies 
 Save the current set of stubs as a named profile, then restore it later with one click.
 Export a profile as JSON and share it with teammates — they import it in seconds.
 
-![Profiles](.assets/profile.jpg)
+![Profiles](./.assets/profile.jpg)
 
 | Mode | Behavior |
 |------|----------|
