@@ -15,6 +15,7 @@ services:
       - ./wiremock/mappings:/home/wiremock/mappings
       - ./wiremock/__files:/home/wiremock/__files
       - ./wiremock/extensions:/var/wiremock/extensions
+      - ./wiremock/profiles:/app/wiremock/profiles
     command:
       - "--port=8080"
       - "--verbose"

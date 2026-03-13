@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Профили стабов')}"></head>
+<body class="d-flex flex-column vh-100">
+
+<nav th:replace="~{fragments/navbar :: navbar('profiles')}"></nav>
+
+<div class="container-fluid py-3 flex-grow-1 overflow-y-auto">
+    <div class="row justify-content-center">
+        <div class="col-xl-9">
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h4 class="mb-0">
+                    <i class="bi bi-collection-fill text-warning me-2"></i>Профили стабов
+                </h4>
+                <div class="d-flex gap-2">
+                    <!-- Экспорт текущих стабов -->
+                    <button class="btn btn-sm btn-outline-info" id="btnExportCurrent">
+                        <i class="bi bi-download me-1"></i>Экспорт текущих стабов
+                    </button>
+                    <!-- Импорт из файла -->
+                    <button class="btn btn-sm btn-outline-primary" id="btnImportFile">
+                        <i class="bi bi-upload me-1"></i>Импорт из файла
+                    </button>
+                    <!-- Сохранить как профиль -->
+                    <button class="btn btn-sm btn-success" id="btnSaveProfile">
+                        <i class="bi bi-floppy-fill me-1"></i>Сохранить как профиль
+                    </button>
+                </div>
+            </div>
+
+            <!-- Текущее состояние WireMock -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-semibold bg-dark bg-opacity-10 d-flex
+                    align-items-center justify-content-between">
+                    <span><i class="bi bi-activity me-2 text-success"></i>Текущие стабы в WireMock</span>
+                    <a href="/stubs" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-box-arrow-up-right"></i> Открыть
+                    </a>
+                </div>
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center gap-4">
+                <span>
+                    Загружено стабов:
+                    <strong id="currentStubCount" class="text-primary">—</strong>
+                </span>
+                        <span class="text-muted small">
+                    Для сохранения текущего набора нажмите «Сохранить как профиль»
+                </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список профилей -->
+            <div th:if="${#lists.isEmpty(profiles)}" id="emptyProfiles"
+                 class="text-center text-muted py-5">
+                <i class="bi bi-collection display-4 d-block mb-3 opacity-25"></i>
+                <p>Нет сохранённых профилей</p>
+                <p class="small">Нажмите «Сохранить как профиль» чтобы сохранить текущие стабы</p>
+            </div>
+
+            <div id="profilesList">
+                <div th:each="p : ${profiles}"
+                     class="card shadow-sm mb-3 profile-card"
+                     th:attr="data-name=${p.name}">
+                    <div class="card-body py-2 d-flex align-items-center gap-3">
+
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="fw-semibold">
+                                <i class="bi bi-folder-fill text-warning me-1"></i>
+                                <span th:text="${p.name}"></span>
+                            </div>
+                            <div class="small text-muted" th:if="${!#strings.isEmpty(p.description)}"
+                                 th:text="${p.description}">
+                            </div>
+                        </div>
+
+                        <div class="text-center" style="min-width:70px">
+                            <div class="badge bg-secondary fs-6" th:text="${p.stubCount}">0</div>
+                            <div class="small text-muted">стабов</div>
+                        </div>
+
+                        <div class="small text-muted text-end" style="min-width:130px">
+                            <div th:if="${p.updatedAt != null}">
+                                <i class="bi bi-clock me-1"></i>
+                                <span th:text="${#temporals.format(p.updatedAt, 'dd.MM.yyyy HH:mm')}"></span>
+                            </div>
+                        </div>
+
+                        <!-- Кнопки действий -->
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button class="btn btn-sm btn-success btn-apply-replace"
+                                    title="Загрузить в WireMock (заменить все)">
+                                <i class="bi bi-arrow-repeat"></i> Заменить
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary btn-apply-merge"
+                                    title="Загрузить в WireMock (добавить к существующим)">
+                                <i class="bi bi-plus-circle"></i> Слияние
+                            </button>
+                            <button class="btn btn-sm btn-outline-info btn-export-profile"
+                                    title="Скачать профиль как JSON">
+                                <i class="bi bi-download"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary btn-overwrite-profile"
+                                    title="Перезаписать профиль текущими стабами">
+                                <i class="bi bi-floppy"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete-profile"
+                                    title="Удалить профиль">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Модал: Сохранить как профиль -->
+<div class="modal fade" id="saveProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-floppy-fill text-success me-2"></i>
+                    Сохранить как профиль
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Название профиля <span class="text-danger">*</span></label>
+                    <input type="text" id="saveProfileName" class="form-control"
+                           placeholder="user-service, payment-api, ..."/>
+                    <div class="form-text">
+                        Используется как имя файла. Разрешены буквы, цифры, «-» и «_».
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Описание</label>
+                    <input type="text" id="saveProfileDesc" class="form-control"
+                           placeholder="Стабы для User Service v2"/>
+                </div>
+                <div class="alert alert-info small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Будут сохранены все стабы из WireMock (<strong id="stubCountForSave">—</strong> шт.)
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-success" id="btnConfirmSaveProfile">
+                    <i class="bi bi-floppy-fill me-1"></i>Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модал: Импорт из файла -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload text-primary me-2"></i>
+                    Импорт профиля из файла
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">JSON-файл профиля</label>
+                    <input type="file" id="importFile" class="form-control" accept=".json"/>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Режим загрузки</label>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="form-check p-3 border rounded"
+                             style="cursor:pointer" id="modeReplacePicker">
+                            <input class="form-check-input" type="radio"
+                                   name="importMode" id="importModeReplace" value="replace"/>
+                            <label class="form-check-label w-100" for="importModeReplace"
+                                   style="cursor:pointer">
+                                <strong><i class="bi bi-arrow-repeat me-1 text-success"></i>Заменить</strong>
+                                <div class="small text-muted mt-1">
+                                    Удалить все текущие стабы и загрузить из файла.
+                                    Используй для локальной разработки.
+                                </div>
+                            </label>
+                        </div>
+                        <div class="form-check p-3 border rounded border-primary"
+                             style="cursor:pointer" id="importModeCard">
+                            <input class="form-check-input" type="radio"
+                                   name="importMode" id="importModeMerge" value="merge" checked/>
+                            <label class="form-check-label w-100" for="importModeMerge"
+                                   style="cursor:pointer">
+                                <strong><i class="bi bi-plus-circle me-1 text-primary"></i>Слияние</strong>
+                                <div class="small text-muted mt-1">
+                                    Добавить стабы к существующим. Подходит для k8s
+                                    где другие тестировщики уже загрузили свои стабы.
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="importSaveAsProfile"/>
+                    <label class="form-check-label small" for="importSaveAsProfile">
+                        Также сохранить как профиль на диске
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmImport">
+                    <i class="bi bi-upload me-1"></i>Импортировать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модал: Экспорт с именем -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-download text-info me-2"></i>Экспорт текущих стабов
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Имя файла</label>
+                    <div class="input-group">
+                        <input type="text" id="exportName" class="form-control"
+                               value="stubs-export"/>
+                        <span class="input-group-text">.json</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Описание (опционально)</label>
+                    <input type="text" id="exportDesc" class="form-control"
+                           placeholder="Для коллеги: стабы user-service"/>
+                </div>
+                <div class="alert alert-info small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Файл скачается в браузере — ничего не сохраняется на сервере.
+                    Передай коллеге, он загрузит через «Импорт из файла».
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <a id="btnConfirmExport" href="#" class="btn btn-info text-white">
+                    <i class="bi bi-download me-1"></i>Скачать
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/profiles.js}"></script>
+</body>
+</html>

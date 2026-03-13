@@ -14,9 +14,13 @@ spring:
     default-property-inclusion: non_null
     deserialization:
       fail-on-unknown-properties: false
-
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 integration:
   wiremock-host: http://localhost:8888
+  profiles-dir: ./wiremock/profiles
 
 management:
   endpoints:

@@ -1,17 +1,9 @@
 package ru.mcs.webwiremock.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import ru.mcs.webwiremock.config.WiremockFeignConfig;
-import ru.mcs.webwiremock.dto.wiremock.LoggedRequestsWrapper;
-import ru.mcs.webwiremock.dto.wiremock.StubMapping;
-import ru.mcs.webwiremock.dto.wiremock.StubMappingsWrapper;
+import ru.mcs.webwiremock.dto.wiremock.*;
 
 @FeignClient(
         name = "wiremock-admin",
@@ -45,10 +37,14 @@ public interface WiremockAdminClient {
     @DeleteMapping("/mappings")
     void deleteAllMappings();
 
-    @PostMapping("/mappings/reset")
-    void resetMappings();
+    /**
+     * Bulk import — ключевой метод для профилей.
+     * importOptions.deleteAllNotInImport=true  → replace
+     * importOptions.deleteAllNotInImport=false → merge
+     */
+    @PostMapping("/mappings/import")
+    void importMappings(@RequestBody StubMappingsImport importRequest);
 
-    /** Возвращает List<ServeEvent> внутри wrapper — wasMatched и timing на верхнем уровне */
     @GetMapping("/requests")
     LoggedRequestsWrapper getRequests(
             @RequestParam(required = false) Integer limit,
