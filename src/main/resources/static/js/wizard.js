@@ -46,6 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
         () => addKvRow('requestHeadersContainer', true));
 
     document.getElementById('btnWizSave').addEventListener('click', saveStubs);
+
+    // Prefill если edit или clone режим
+    if ((APP_DATA.editMode || APP_DATA.cloneMode) && APP_DATA.stub) {
+        prefillWizard(APP_DATA.stub);
+    }
 });
 
 // ─── Step navigation ──────────────────────────────────────────
@@ -190,19 +195,29 @@ async function saveStubs() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Сохранение...';
     try {
         const stub = buildStubJson();
-        await Api.post('/stubs', stub);
 
-        if (document.getElementById('wCreateProxy').checked) {
+        if (APP_DATA.editMode && APP_DATA.stubId) {
+            // Редактирование — PUT с сохранением id
+            stub.id = APP_DATA.stubId;
+            await Api.put(`/stubs/${APP_DATA.stubId}`, stub);
+        } else {
+            // Создание или клонирование — POST
+            await Api.post('/stubs', stub);
+        }
+
+        if (!APP_DATA.editMode && document.getElementById('wCreateProxy').checked) {
             const proxyUrl = document.getElementById('wProxyUrl').value.trim();
             if (proxyUrl) await Api.post('/stubs', buildProxyJson(stub));
         }
 
-        Toast.show('Стаб успешно создан!', 'success');
+        Toast.show(APP_DATA.editMode ? 'Стаб обновлён!' : 'Стаб создан!', 'success');
         setTimeout(() => location.assign('/stubs'), 1000);
-    } catch (e) {
-        Toast.show('Ошибка сохранения: ' + e.message, 'danger');
+    } catch(e) {
+        Toast.show('Ошибка: ' + e.message, 'danger');
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-floppy-fill"></i> Сохранить';
+        btn.innerHTML = APP_DATA.editMode
+            ? '<i class="bi bi-floppy-fill"></i> Обновить'
+            : '<i class="bi bi-floppy-fill"></i> Сохранить';
     }
 }
 
@@ -216,4 +231,116 @@ function collectKvMap(containerId) {
         if (k && v) result[k] = { [op]: v };
     });
     return result;
+}
+
+function prefillWizard(stub) {
+    if (!stub) return;
+    const req  = stub.request  || {};
+    const resp = stub.response || {};
+    const meta = stub.metadata || {};
+
+    // Шаг 0: Запрос
+    document.getElementById('wName').value = stub.name || '';
+
+    document.getElementById('wMethod').value =
+        ['GET','POST','PUT','DELETE','PATCH','ANY'].includes(req.method)
+            ? req.method : 'GET';
+
+    // Определяем тип URL
+    let urlType = 'urlPath', urlVal = '';
+    if (req.urlPath)         { urlType = 'urlPath';        urlVal = req.urlPath; }
+    else if (req.url)        { urlType = 'url';            urlVal = req.url; }
+    else if (req.urlPathPattern) { urlType = 'urlPathPattern'; urlVal = req.urlPathPattern; }
+    else if (req.urlPattern) { urlType = 'urlPattern';     urlVal = req.urlPattern; }
+    else if (req.urlPathTemplate) { urlType = 'urlPathTemplate'; urlVal = req.urlPathTemplate; }
+
+    document.getElementById('wUrlType').value = urlType;
+    document.getElementById('wUrl').value     = urlVal;
+
+    // Клиент из customMatcher или metadata
+    const clientId = meta.clientId
+        || req.customMatcher?.parameters?.payload?.externalId
+        || '';
+
+    if (clientId) {
+        const select = document.getElementById('wClientSelect');
+        // Ищем среди существующих клиентов
+        const existing = [...select.options].find(o => o.value === clientId);
+        if (existing) {
+            select.value = clientId;
+        } else {
+            // Новый клиент
+            select.value = '__new__';
+            document.getElementById('newClientSection').classList.remove('d-none');
+            document.getElementById('wNewClientId').value   = clientId;
+            document.getElementById('wNewClientName').value = meta.clientName || '';
+        }
+    }
+
+    // Шаг 1: Ответ
+    const statusVal = String(resp.status || '200');
+    const statusSel = document.getElementById('wStatus');
+    if ([...statusSel.options].some(o => o.value === statusVal)) {
+        statusSel.value = statusVal;
+    }
+
+    // Content-Type
+    const ct = resp.headers?.['Content-Type'] || resp.headers?.['content-type'] || 'application/json';
+    const ctSel = document.getElementById('wContentType');
+    if ([...ctSel.options].some(o => o.value === ct)) ctSel.value = ct;
+
+    // Задержка
+    if (resp.fixedDelayMilliseconds) {
+        document.getElementById('wDelay').value = resp.fixedDelayMilliseconds;
+    }
+
+    // Тело ответа
+    let bodyStr = '';
+    if (resp.jsonBody !== undefined && resp.jsonBody !== null) {
+        bodyStr = JSON.stringify(resp.jsonBody, null, 2);
+    } else if (resp.body) {
+        bodyStr = resp.body;
+    }
+    document.getElementById('wBody').value = bodyStr;
+
+    // Handlebars
+    const hasHandlebars = Array.isArray(resp.transformers)
+        && resp.transformers.includes('response-template');
+    document.getElementById('wHandlebars').checked = hasHandlebars;
+
+    // Шаг 2: Query params
+    if (req.queryParameters) {
+        for (const [key, matcher] of Object.entries(req.queryParameters)) {
+            addKvRow('queryParamsContainer', true);
+            const rows = document.querySelectorAll('#queryParamsContainer .param-row');
+            const row  = rows[rows.length - 1];
+            row.querySelector('.kv-key').value = key;
+            const opEntry = Object.entries(matcher)[0];
+            if (opEntry) {
+                const opSel = row.querySelector('.kv-op');
+                if (opSel && [...opSel.options].some(o => o.value === opEntry[0])) {
+                    opSel.value = opEntry[0];
+                }
+                row.querySelector('.kv-value').value = opEntry[1] || '';
+            }
+        }
+    }
+
+    // Шаг 2: Request headers
+    if (req.headers) {
+        for (const [key, matcher] of Object.entries(req.headers)) {
+            addKvRow('requestHeadersContainer', true);
+            const rows = document.querySelectorAll('#requestHeadersContainer .header-row');
+            const row  = rows[rows.length - 1];
+            row.querySelector('.kv-key').value = key;
+            const opEntry = Object.entries(matcher)[0];
+            if (opEntry) {
+                const opSel = row.querySelector('.kv-op');
+                if (opSel && [...opSel.options].some(o => o.value === opEntry[0])) {
+                    opSel.value = opEntry[0];
+                }
+                row.querySelector('.kv-value').value = opEntry[1] || '';
+            }
+        }
+    }
 }

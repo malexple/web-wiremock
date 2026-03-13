@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Импорт OpenAPI')}"></head>
+<body class="d-flex flex-column vh-100">
+
+<nav th:replace="~{fragments/navbar :: navbar('stubs')}"></nav>
+
+<div class="container-fluid py-3 flex-grow-1 overflow-y-auto">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a th:href="@{/stubs}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h4 class="mb-0">
+                    <i class="bi bi-cloud-download-fill text-info me-2"></i>Импорт из OpenAPI
+                </h4>
+            </div>
+
+            <!-- Шаг 1: Загрузка спецификации -->
+            <div id="specInputSection">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold bg-info bg-opacity-10">
+                        <i class="bi bi-link-45deg me-2 text-info"></i>Источник спецификации
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Вкладки источника -->
+                        <ul class="nav nav-tabs mb-3" id="specSourceTabs">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-source-tab="url">
+                                    <i class="bi bi-link me-1"></i>URL
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-source-tab="text">
+                                    <i class="bi bi-code-slash me-1"></i>Вставить JSON/YAML
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-source-tab="file">
+                                    <i class="bi bi-file-earmark-code me-1"></i>Файл
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- URL -->
+                        <div id="source-tab-url">
+                            <div class="d-flex gap-2">
+                                <input type="text" id="specUrl" class="form-control font-monospace"
+                                       placeholder="http://my-service:8080/v3/api-docs"/>
+                                <button id="btnLoadUrl" class="btn btn-info text-white flex-shrink-0">
+                                    <i class="bi bi-download me-1"></i>Загрузить
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                Загрузка выполняется через бэкенд (обход CORS для внутренних k8s-адресов).
+                                Поддерживаются JSON и YAML.
+                            </div>
+                        </div>
+
+                        <!-- Текст -->
+                        <div id="source-tab-text" class="d-none">
+                            <textarea id="specText" class="form-control font-monospace"
+                                      rows="10"
+                                      placeholder="Вставьте содержимое openapi.json или openapi.yaml..."></textarea>
+                            <button id="btnParseText" class="btn btn-info text-white mt-2">
+                                <i class="bi bi-play-fill me-1"></i>Разобрать
+                            </button>
+                        </div>
+
+                        <!-- Файл -->
+                        <div id="source-tab-file" class="d-none">
+                            <div class="mb-2">
+                                <input type="file" id="specFile" class="form-control"
+                                       accept=".json,.yaml,.yml"/>
+                            </div>
+                            <button id="btnParseFile" class="btn btn-info text-white">
+                                <i class="bi bi-play-fill me-1"></i>Разобрать
+                            </button>
+                            <div class="form-text">
+                                Файл читается в браузере — ничего не загружается на сервер.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Индикатор загрузки -->
+                <div id="loadingIndicator" class="d-none text-center py-4">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <div class="mt-2 text-muted">Загрузка спецификации...</div>
+                </div>
+
+                <!-- Ошибка -->
+                <div id="specError" class="alert alert-danger d-none"></div>
+            </div>
+
+            <!-- Шаг 2: Выбор эндпоинтов -->
+            <div id="endpointsSection" class="d-none">
+
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="mb-0" id="specTitle">OpenAPI Spec</h5>
+                        <small class="text-muted" id="specVersion"></small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button id="btnSelectAll" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-check-all"></i> Выбрать все
+                        </button>
+                        <button id="btnDeselectAll" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-square"></i> Снять все
+                        </button>
+                        <button id="btnBackToSpec" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Назад
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Фильтр по тегу -->
+                <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
+                    <label class="form-label mb-0 small fw-semibold text-muted">Тег:</label>
+                    <div id="tagFilters" class="d-flex gap-1 flex-wrap"></div>
+                </div>
+
+                <!-- Таблица эндпоинтов -->
+                <div class="card shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" style="table-layout:fixed">
+                            <colgroup>
+                                <col style="width:38px"/>   <!-- чекбокс -->
+                                <col style="width:90px"/>   <!-- метод -->
+                                <col style="width:35%"/>    <!-- путь -->
+                                <col/>                       <!-- описание -->
+                                <col style="width:220px"/>  <!-- статусы -->
+                            </colgroup>
+                            <thead class="table-dark sticky-top">
+                            <tr>
+                                <th><input type="checkbox" id="chkSelectAll" class="form-check-input"/></th>
+                                <th>Метод</th>
+                                <th>Путь</th>
+                                <th>Описание</th>
+                                <th>Статус ответа</th>
+                            </tr>
+                            </thead>
+                            <tbody id="endpointsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="text-muted small">
+                        Выбрано: <strong id="selectedCount">0</strong> эндпоинтов
+                    </span>
+                    <button id="btnCreateStubs" class="btn btn-success">
+                        <i class="bi bi-plus-circle-fill me-1"></i>Создать стабы
+                    </button>
+                </div>
+
+                <!-- Прогресс создания -->
+                <div id="createProgress" class="d-none mt-3">
+                    <div class="progress mb-2" style="height:8px">
+                        <div id="createProgressBar"
+                             class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                             style="width:0%"></div>
+                    </div>
+                    <div id="createProgressText" class="small text-muted text-center"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const APP_DATA = { wiremockHost: /*[[${wiremockHost}]]*/ '' };
+    /*]]>*/
+</script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/js-yaml.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/openapi-import.js}"></script>
+</body>
+</html>

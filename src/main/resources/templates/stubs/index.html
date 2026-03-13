@@ -39,7 +39,10 @@
             Стабов: <strong th:text="${totalStubs}">0</strong>
         </span>
 
-        <div class="ms-auto">
+        <div class="ms-auto d-flex gap-2">
+            <a th:href="@{/stubs/openapi-import}" class="btn btn-sm btn-outline-info">
+                <i class="bi bi-cloud-download-fill"></i> Импорт OpenAPI
+            </a>
             <a th:href="@{/stubs/wizard}" class="btn btn-sm btn-success">
                 <i class="bi bi-plus-circle-fill"></i> Новый стаб
             </a>
@@ -88,17 +91,23 @@
                     <span id="stubTitle" class="fw-semibold text-truncate"></span>
                     <span id="stubIdBadge" class="badge bg-light text-muted font-monospace small"></span>
                 </div>
-                <div class="btn-group btn-group-sm ms-auto flex-shrink-0">
-                    <button class="btn btn-outline-secondary" id="btnBeautify" title="Форматировать JSON">
+                <div class="d-flex gap-1 ms-auto flex-shrink-0">
+                    <button class="btn btn-sm btn-outline-secondary" id="btnBeautify" title="Форматировать JSON">
                         <i class="bi bi-magic"></i>
                     </button>
-                    <button class="btn btn-outline-primary" id="btnSave" title="Сохранить изменения">
-                        <i class="bi bi-floppy-fill"></i> Сохранить
+                    <button class="btn btn-sm btn-outline-primary" id="btnSave" title="Сохранить изменения">
+                        <i class="bi bi-floppy-fill"></i>
                     </button>
-                    <button class="btn btn-outline-warning" id="btnCreateProxy" title="Создать прокси-стаб">
-                        <i class="bi bi-arrow-left-right"></i> Прокси
+                    <button class="btn btn-sm btn-outline-info" id="btnEdit" title="Редактировать в визарде">
+                        <i class="bi bi-pencil-fill"></i>
                     </button>
-                    <button class="btn btn-outline-danger" id="btnDelete" title="Удалить стаб">
+                    <button class="btn btn-sm btn-outline-secondary" id="btnClone" title="Клонировать для другого клиента">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" id="btnCreateProxy" title="Создать прокси-стаб">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="btnDelete" title="Удалить стаб">
                         <i class="bi bi-trash3-fill"></i>
                     </button>
                 </div>

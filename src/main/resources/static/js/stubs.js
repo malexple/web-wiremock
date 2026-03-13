@@ -201,6 +201,17 @@ function initStubButtons() {
                 setTimeout(() => location.reload(), 800);
             } catch (e) { Toast.show('Ошибка: ' + e.message, 'danger'); }
         });
+
+    document.getElementById('btnEdit').addEventListener('click', () => {
+        if (!currentStubId) return;
+        location.assign(`/stubs/${currentStubId}/edit`);
+    });
+
+    document.getElementById('btnClone').addEventListener('click', () => {
+        if (!currentStubId) return;
+        location.assign(`/stubs/${currentStubId}/clone`);
+    });
+
 }
 
 // ─── Run Test ─────────────────────────────────────────────────

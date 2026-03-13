@@ -9,14 +9,24 @@
     <div class="row justify-content-center">
         <div class="col-xl-9 col-xxl-8">
 
+            <!-- Заголовок — показываем режим -->
             <div class="d-flex align-items-center gap-3 mb-4">
                 <a th:href="@{/stubs}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i>
                 </a>
                 <h4 class="mb-0">
-                    <i class="bi bi-plus-circle-fill text-success me-2"></i>Новый стаб
+        <span th:if="${editMode}">
+            <i class="bi bi-pencil-fill text-info me-2"></i>Редактировать стаб
+        </span>
+                    <span th:if="${cloneMode}">
+            <i class="bi bi-copy text-secondary me-2"></i>Клонировать стаб
+        </span>
+                    <span th:unless="${editMode or cloneMode}">
+            <i class="bi bi-plus-circle-fill text-success me-2"></i>Новый стаб
+        </span>
                 </h4>
             </div>
+
 
             <!-- Шаги -->
             <div class="d-flex align-items-center mb-4 wizard-steps-bar">
@@ -282,7 +292,12 @@
                         Далее <i class="bi bi-chevron-right"></i>
                     </button>
                     <button id="btnWizSave" class="btn btn-success d-none">
-                        <i class="bi bi-floppy-fill"></i> Сохранить
+                        <span th:if="${editMode}">
+                            <i class="bi bi-floppy-fill"></i> Обновить
+                        </span>
+                        <span th:unless="${editMode}">
+                            <i class="bi bi-floppy-fill"></i> Сохранить
+                        </span>
                     </button>
                 </div>
             </div>
@@ -297,8 +312,17 @@
     /*<![CDATA[*/
     const APP_DATA = {
         wiremockHost: /*[[${wiremockHost}]]*/ '',
-        clients:      /*[[${clients}]]*/ []
+        clients:      /*[[${clients}]]*/ [],
+        editMode:     /*[[${editMode}]]*/ false,
+        cloneMode:    /*[[${cloneMode}]]*/ false,
+        stubId:       /*[[${stubId}]]*/ null,
+        stub:         /*[[${stubJson}]]*/ null
     };
+    // stub приходит как JSON-строка из Thymeleaf — парсим
+    if (APP_DATA.stub && APP_DATA.stub !== 'null') {
+        try { APP_DATA.stub = JSON.parse(APP_DATA.stub); }
+        catch(e) { APP_DATA.stub = null; }
+    }
     /*]]>*/
 </script>
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
