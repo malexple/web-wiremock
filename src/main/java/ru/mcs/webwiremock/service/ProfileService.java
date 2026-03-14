@@ -31,11 +31,9 @@ public class ProfileService {
     private final WiremockProperties  wiremockProperties;
     private final ObjectMapper         objectMapper;
 
-    // ─── Список профилей на диске ─────────────────────────────
     public List<ProfileInfo> listProfiles() {
         Path dir = profilesDir();
         if (!Files.exists(dir)) return Collections.emptyList();
-
         try (Stream<Path> files = Files.list(dir)) {
             return files
                     .filter(p -> p.getFileName().toString().endsWith(".json"))
@@ -49,14 +47,12 @@ public class ProfileService {
         }
     }
 
-    // ─── Загрузить профиль из файла ───────────────────────────
     public ProfileBundle loadProfileBundle(String name) throws IOException {
         Path file = profileFile(name);
         if (!Files.exists(file)) throw new IllegalArgumentException("Profile not found: " + name);
         return objectMapper.readValue(file.toFile(), ProfileBundle.class);
     }
 
-    // ─── Сохранить текущие стабы как профиль ─────────────────
     public ProfileBundle saveCurrentAsProfile(String name, String description) throws IOException {
         List<StubMapping> stubs = getAllCurrentStubs();
         ProfileBundle bundle = ProfileBundle.builder()
@@ -71,17 +67,11 @@ public class ProfileService {
         return bundle;
     }
 
-    // ─── Загрузить профиль в WireMock ─────────────────────────
-    /**
-     * @param mode "replace" — удалить все стабы и загрузить профиль
-     *             "merge"   — добавить стабы профиля к существующим
-     */
     public void applyProfile(String name, String mode) throws IOException {
         ProfileBundle bundle = loadProfileBundle(name);
         applyBundle(bundle, mode);
     }
 
-    // ─── Применить ProfileBundle (используется при file-import) ─
     public void applyBundle(ProfileBundle bundle, String mode) {
         boolean replace = "replace".equalsIgnoreCase(mode);
         ImportOptions opts = ImportOptions.builder()
@@ -93,12 +83,22 @@ public class ProfileService {
                 .importOptions(opts)
                 .build();
         wiremockAdminClient.importMappings(req);
+
+        // При Replace — сбрасываем все сценарии чтобы не было рассинхронизации состояний
+        if (replace) {
+            try {
+                wiremockAdminClient.resetAllScenarios();
+                log.info("Reset all scenarios after Replace profile apply");
+            } catch (Exception e) {
+                log.warn("Failed to reset scenarios after Replace: {}", e.getMessage());
+            }
+        }
+
         log.info("Applied profile '{}' mode={} stubs={}",
                 bundle.getName(), mode,
                 bundle.getStubs() != null ? bundle.getStubs().size() : 0);
     }
 
-    // ─── Удалить профиль с диска ──────────────────────────────
     public void deleteProfile(String name) throws IOException {
         Path file = profileFile(name);
         if (Files.exists(file)) {
@@ -107,7 +107,6 @@ public class ProfileService {
         }
     }
 
-    // ─── Экспорт текущих стабов как bundle (без сохранения) ──
     public ProfileBundle exportCurrentStubs(String name, String description) {
         return ProfileBundle.builder()
                 .name(name != null ? name : "export")
@@ -118,7 +117,6 @@ public class ProfileService {
                 .build();
     }
 
-    // ─── Вспомогательные ─────────────────────────────────────
     private List<StubMapping> getAllCurrentStubs() {
         StubMappingsWrapper wrapper = wiremockAdminClient.getAllMappings(1000, 0);
         return wrapper.getMappings() != null ? wrapper.getMappings() : Collections.emptyList();

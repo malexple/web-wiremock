@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Сценарии')}"></head>
+<body class="d-flex flex-column vh-100">
+
+<nav th:replace="~{fragments/navbar :: navbar('scenarios')}"></nav>
+
+<div class="d-flex flex-grow-1 overflow-hidden">
+
+    <!-- ═══ Левая панель ══════════════════════════════════════ -->
+    <div id="scenariosListPane"
+         class="d-flex flex-column border-end bg-body-tertiary"
+         style="width:300px; min-width:200px; max-width:50%">
+
+        <div class="p-2 border-bottom d-flex align-items-center gap-1 flex-wrap">
+            <span class="fw-semibold me-1">
+                <i class="bi bi-diagram-3-fill text-primary me-1"></i>Сценарии
+            </span>
+            <span class="badge bg-secondary ms-auto" id="scenariosTotalBadge"
+                  th:text="${scenarios.size()}">0</span>
+            <button class="btn btn-sm btn-success" id="btnNewScenario" title="Новый сценарий">
+                <i class="bi bi-plus-lg"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-warning" id="btnResetAll"
+                    title="Сбросить все сценарии в Started">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-primary" id="btnImportScenario"
+                    title="Импорт сценария из файла">
+                <i class="bi bi-upload"></i>
+            </button>
+        </div>
+
+        <div class="px-2 py-1 border-bottom">
+            <input type="text" id="scenarioSearch" class="form-control form-control-sm"
+                   placeholder="Поиск по названию..."/>
+        </div>
+
+        <div id="scenariosList" class="overflow-y-auto flex-grow-1 py-1">
+            <div th:if="${#lists.isEmpty(scenarios)}"
+                 class="text-center text-muted py-5 px-3">
+                <i class="bi bi-diagram-3 display-5 d-block mb-2 opacity-25"></i>
+                <div class="small">Нет активных сценариев</div>
+                <div class="small mt-1 opacity-75">
+                    Нажмите <strong>+</strong> чтобы создать первый сценарий
+                </div>
+            </div>
+
+            <div th:each="sc : ${scenarios}"
+                 class="scenario-item px-2 py-1"
+                 th:attr="data-name=${sc.name}">
+                <div class="scenario-card p-2 rounded border" style="cursor:pointer">
+                    <div class="d-flex align-items-center gap-1 mb-1">
+                        <i class="bi bi-diagram-2 text-primary flex-shrink-0"></i>
+                        <span class="fw-semibold text-truncate small flex-grow-1"
+                              th:text="${sc.name}">scenario</span>
+                        <span th:if="${sc.global}"
+                              class="badge bg-warning text-dark"
+                              style="font-size:0.6rem">GLOBAL</span>
+                        <span th:unless="${sc.global}"
+                              class="badge bg-info text-dark text-truncate"
+                              style="font-size:0.6rem; max-width:80px"
+                              th:text="${sc.externalId}">user</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span th:if="${sc.completed}" class="badge bg-success"
+                              style="font-size:0.65rem">
+                            <i class="bi bi-check2-all"></i> Завершён
+                        </span>
+                        <span th:unless="${sc.completed}" class="badge bg-primary"
+                              style="font-size:0.65rem" th:text="${sc.currentState}">Started</span>
+                        <span class="text-muted" style="font-size:0.7rem">
+                            <i class="bi bi-list-ol"></i>
+                            <span th:text="${sc.stepCount}">0</span> шагов
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Сплиттер ══════════════════════════════════════════ -->
+    <div id="scenarioSplitter" class="splitter"></div>
+
+    <!-- ═══ Правая панель ═════════════════════════════════════ -->
+    <div class="d-flex flex-column flex-grow-1 overflow-hidden">
+
+        <div id="scenarioEmptyState"
+             class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+            <i class="bi bi-diagram-3 display-3 mb-3 opacity-25"></i>
+            <div>Выберите сценарий из списка</div>
+            <button class="btn btn-success btn-sm mt-3" id="btnNewScenarioEmpty">
+                <i class="bi bi-plus-lg me-1"></i>Создать сценарий
+            </button>
+        </div>
+
+        <div id="scenarioDetailContent" class="d-flex flex-column h-100 d-none">
+
+            <div class="px-3 py-2 border-bottom d-flex align-items-center gap-2 flex-wrap">
+                <i class="bi bi-diagram-3-fill text-primary"></i>
+                <span class="fw-bold fs-6" id="detailName">—</span>
+                <span id="detailGlobalBadge" class="badge bg-warning text-dark d-none"
+                      style="font-size:0.65rem">GLOBAL</span>
+                <span id="detailClientBadge" class="badge bg-info text-dark d-none"
+                      style="font-size:0.65rem"></span>
+                <span id="detailCompletedBadge" class="badge bg-success d-none">
+                    <i class="bi bi-check2-all"></i> Завершён
+                </span>
+                <div class="ms-auto d-flex gap-2 flex-wrap">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" id="btnStepPrev"
+                                title="← Предыдущий шаг" disabled>
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" id="btnStepNext"
+                                title="→ Следующий шаг" disabled>
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-sm btn-outline-warning" id="btnResetScenario">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" id="btnExportScenario"
+                            title="Экспорт в JSON">
+                        <i class="bi bi-download"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="btnDeleteScenario"
+                            title="Удалить сценарий">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-grow-1 overflow-y-auto p-3" id="scenarioStepsContainer">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="text-muted small">Текущее состояние:</span>
+                    <span class="badge bg-primary" id="detailCurrentState">Started</span>
+                </div>
+                <div id="stepsChain" class="d-flex flex-column gap-0"></div>
+
+                <div class="mt-4 p-3 bg-body-tertiary rounded border">
+                    <div class="small fw-semibold mb-2 text-muted">
+                        <i class="bi bi-sliders me-1"></i>Установить состояние вручную
+                    </div>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="manualStateSelect"></select>
+                        <button class="btn btn-sm btn-primary text-nowrap" id="btnSetState">
+                            Установить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Мастер создания сценария ═════════════════════════════ -->
+<div class="modal fade" id="newScenarioModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-diagram-3-fill text-primary me-2"></i>Новый сценарий
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Шаг индикатор -->
+                <div class="d-flex align-items-center gap-2 mb-4" id="wizardStepIndicator">
+                    <div class="wizard-step-dot active" data-step="1">1</div>
+                    <div class="flex-grow-1" style="height:2px; background:var(--bs-border-color)"></div>
+                    <div class="wizard-step-dot" data-step="2">2</div>
+                    <div class="flex-grow-1" style="height:2px; background:var(--bs-border-color)"></div>
+                    <div class="wizard-step-dot" data-step="3">3</div>
+                </div>
+
+                <!-- ─── Шаг 1: Основные данные ─────────────── -->
+                <div id="wizardStep1">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-info-circle me-1"></i>Основные данные
+                    </h6>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">
+                            Название сценария <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-sm"
+                               id="wizScenarioName"
+                               placeholder="Например: cart-lifecycle"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Привязка к клиенту</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio"
+                                   name="wizClientMode" id="wizModeClient" value="client" checked/>
+                            <label class="form-check-label small" for="wizModeClient">
+                                Конкретный <strong>externalId</strong>
+                                <span class="text-muted">(рекомендуется, не мешает другим)</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio"
+                                   name="wizClientMode" id="wizModeGlobal" value="global"/>
+                            <label class="form-check-label small" for="wizModeGlobal">
+                                <span class="badge bg-warning text-dark me-1">GLOBAL</span>
+                                Глобальный — виден всем клиентам
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="wizExternalIdBlock">
+                        <label class="form-label small fw-semibold">JWT externalId</label>
+                        <input type="text" class="form-control form-control-sm"
+                               id="wizExternalId" placeholder="user-A"/>
+                    </div>
+                    <div class="alert alert-warning d-none small" id="wizGlobalWarning">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Глобальный сценарий будет срабатывать для <strong>всех</strong>
+                        клиентов. Убедитесь, что это ожидаемое поведение.
+                    </div>
+                </div>
+
+                <!-- ─── Шаг 2: Цепочка шагов ──────────────── -->
+                <div id="wizardStep2" class="d-none">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-list-ol me-1"></i>Шаги сценария
+                        <span class="text-muted fw-normal small ms-1">
+                            (минимум 1 шаг)
+                        </span>
+                    </h6>
+                    <div id="wizStepsList" class="d-flex flex-column gap-2 mb-3"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddStep">
+                        <i class="bi bi-plus-lg me-1"></i>Добавить шаг
+                    </button>
+                </div>
+
+                <!-- ─── Шаг 3: Подтверждение ───────────────── -->
+                <div id="wizardStep3" class="d-none">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-check2-circle me-1"></i>Подтверждение
+                    </h6>
+                    <div id="wizSummary" class="p-3 bg-body-tertiary rounded border small"></div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm"
+                        data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm d-none"
+                        id="btnWizPrev">
+                    <i class="bi bi-chevron-left me-1"></i>Назад
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnWizNext">
+                    Далее <i class="bi bi-chevron-right ms-1"></i>
+                </button>
+                <button type="button" class="btn btn-success btn-sm d-none" id="btnWizCreate">
+                    <i class="bi bi-diagram-3-fill me-1"></i>Создать сценарий
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Модальное окно импорта ════════════════════════════════ -->
+<div class="modal fade" id="importScenarioModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload me-2"></i>Импорт сценария
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">JSON-файл сценария</label>
+                    <input type="file" class="form-control form-control-sm"
+                           id="importScenarioFile" accept=".json"/>
+                </div>
+                <div class="p-2 rounded border">
+                    <div class="small fw-semibold mb-2">Режим импорта</div>
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="radio"
+                               name="importScenarioMode" id="modeScenarioMerge"
+                               value="merge" checked/>
+                        <label class="form-check-label small" for="modeScenarioMerge">
+                            <strong>Слияние</strong> — добавить к существующим стабам
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                               name="importScenarioMode" id="modeScenarioReplace"
+                               value="replace"/>
+                        <label class="form-check-label small" for="modeScenarioReplace">
+                            <strong>Замена</strong> — удалить все стабы и загрузить
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm"
+                        data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary btn-sm"
+                        id="btnConfirmImportScenario">
+                    <i class="bi bi-upload me-1"></i>Импортировать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer"
+     class="toast-container position-fixed bottom-0 end-0 p-3"
+     style="z-index:9999"></div>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+<script th:src="@{/js/scenarios.js}"></script>
+
+</body>
+</html>

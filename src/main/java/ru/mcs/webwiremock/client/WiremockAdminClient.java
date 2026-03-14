@@ -37,11 +37,6 @@ public interface WiremockAdminClient {
     @DeleteMapping("/mappings")
     void deleteAllMappings();
 
-    /**
-     * Bulk import — ключевой метод для профилей.
-     * importOptions.deleteAllNotInImport=true  → replace
-     * importOptions.deleteAllNotInImport=false → merge
-     */
     @PostMapping("/mappings/import")
     void importMappings(@RequestBody StubMappingsImport importRequest);
 
@@ -59,4 +54,20 @@ public interface WiremockAdminClient {
 
     @GetMapping("/health")
     String getHealth();
+
+    // ─── Scenarios ────────────────────────────────────────────
+
+    @GetMapping("/scenarios")
+    ScenariosWrapper getAllScenarios();
+
+    /** Сбросить ВСЕ сценарии в состояние Started */
+    @PostMapping("/scenarios/reset")
+    void resetAllScenarios();
+
+    /** Установить конкретное состояние для конкретного сценария */
+    @PutMapping("/scenarios/{scenarioName}/state")
+    void setScenarioState(
+            @PathVariable("scenarioName") String scenarioName,
+            @RequestBody ScenarioSetStateRequest request
+    );
 }
