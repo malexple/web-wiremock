@@ -14,6 +14,7 @@
 - ✏️ **Full stub editor** — edit request, response, query params, headers and proxy options
 - ▶️ **Run Test** — fire a real HTTP request to WireMock directly from the UI and see the response
 - 📋 **Request log** — browse all logged requests with headers, body, timing and match status
+- 🎬 **Scenarios** — manage stateful behaviour through visual state machine chains
 - 💾 **Profiles** — save, load, export and import stub sets as portable JSON files
 - 🔀 **Merge / Replace** — apply a profile on top of existing stubs (merge) or reset completely (replace)
 - 📥 **OpenAPI import** — generate stubs automatically from an OpenAPI spec
@@ -93,6 +94,41 @@ Export a profile as JSON and share it with teammates — they import it in secon
 |------|----------|
 | **Replace** | Delete all existing stubs and load the profile. Best for local dev. |
 | **Merge** | Add profile stubs on top of existing ones. Best for shared k8s environments. |
+
+---
+
+### 🎬 Scenarios
+
+Scenarios let you simulate **stateful behaviour** — the same URL returns different responses
+depending on the current state. Perfect for testing CRUD flows, retry logic
+and eventual consistency without a real database.
+
+Each scenario is a chain of steps: `Started → Step 2 → Step 3 → ...`
+Each step is a regular WireMock stub that fires only when the scenario is in the right state.
+
+**UI capabilities:**
+- Visual step chain with active state indicator (auto-refreshes via polling)
+- `←` `→` buttons to navigate step by step
+- Manual state override via dropdown
+- Reset a single scenario or all scenarios to `Started`
+
+![scenario_step.jpg](assets/scenario_step.jpg)
+
+- Bind to a specific `JWT externalId` — one tester's scenario won't interfere with another's
+- `GLOBAL` mode — scenario without client binding, visible to all
+
+![scenario_stubs.jpg](assets/scenario_stubs.jpg)
+
+- Export and import scenarios as JSON (Merge / Replace modes)
+
+![scenario_import.jpg](assets/scenario_import.jpg)
+
+- 3-step creation wizard: create new stubs or clone existing ones
+
+![scenario_add_step1.jpg](assets/scenario_add_step1.jpg)
+![scenario_add_step2_1.jpg](assets/scenario_add_step2_1.jpg)
+![scenario_add_step2_2.jpg](assets/scenario_add_step2_2.jpg)
+![scenario_add_step_3.jpg](assets/scenario_add_step_3.jpg)
 
 ---
 
