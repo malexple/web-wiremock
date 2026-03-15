@@ -47,4 +47,5 @@ public class StubMappingResponse {
 
     // --- Fault injection ---
     private String fault;
+    private ChunkedDribbleDelay chunkedDribbleDelay;
 }

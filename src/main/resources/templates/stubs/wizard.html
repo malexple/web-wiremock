@@ -15,18 +15,17 @@
                     <i class="bi bi-arrow-left"></i>
                 </a>
                 <h4 class="mb-0">
-        <span th:if="${editMode}">
-            <i class="bi bi-pencil-fill text-info me-2"></i>Редактировать стаб
-        </span>
+                    <span th:if="${editMode}">
+                        <i class="bi bi-pencil-fill text-info me-2"></i>Редактировать стаб
+                    </span>
                     <span th:if="${cloneMode}">
-            <i class="bi bi-copy text-secondary me-2"></i>Клонировать стаб
-        </span>
+                        <i class="bi bi-copy text-secondary me-2"></i>Клонировать стаб
+                    </span>
                     <span th:unless="${editMode or cloneMode}">
-            <i class="bi bi-plus-circle-fill text-success me-2"></i>Новый стаб
-        </span>
+                        <i class="bi bi-plus-circle-fill text-success me-2"></i>Новый стаб
+                    </span>
                 </h4>
             </div>
-
 
             <!-- Шаги -->
             <div class="d-flex align-items-center mb-4 wizard-steps-bar">
@@ -120,62 +119,102 @@
                         <i class="bi bi-reply-fill me-2 text-success"></i>Ответ
                     </div>
                     <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold">HTTP статус</label>
-                                <select id="wStatus" class="form-select">
-                                    <option value="200">200 OK</option>
-                                    <option value="201">201 Created</option>
-                                    <option value="204">204 No Content</option>
-                                    <option value="400">400 Bad Request</option>
-                                    <option value="401">401 Unauthorized</option>
-                                    <option value="403">403 Forbidden</option>
-                                    <option value="404">404 Not Found</option>
-                                    <option value="422">422 Unprocessable Entity</option>
-                                    <option value="500">500 Internal Server Error</option>
-                                    <option value="503">503 Service Unavailable</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Content-Type</label>
-                                <select id="wContentType" class="form-select">
-                                    <option value="application/json">application/json</option>
-                                    <option value="application/xml">application/xml</option>
-                                    <option value="text/plain">text/plain</option>
-                                    <option value="text/html">text/html</option>
+
+                        <!-- Fault Injection & Задержка -->
+                        <div class="row g-3 mb-3 border-bottom pb-3">
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold">Поведение ответа (Fault Injection)</label>
+                                <select class="form-select" id="wFaultType">
+                                    <option value="NORMAL">Нормальный HTTP-ответ</option>
+                                    <option value="CHUNKED_DRIBBLE">Медленная отдача (Chunked Dribble)</option>
+                                    <optgroup label="Жесткие сетевые сбои">
+                                        <option value="CONNECTION_RESET_BY_PEER">Сброс соединения (TCP RST)</option>
+                                        <option value="EMPTY_RESPONSE">Пустой ответ (Обрыв без закрытия)</option>
+                                        <option value="MALFORMED_RESPONSE_CHUNK">Отправить мусор в чанках</option>
+                                        <option value="RANDOM_DATA_THEN_CLOSE">Рандомные данные и обрыв</option>
+                                    </optgroup>
                                 </select>
                             </div>
                             <div class="col-md-5">
                                 <label class="form-label fw-semibold">Задержка (мс)</label>
-                                <input type="number" id="wDelay" class="form-control"
-                                       placeholder="0" min="0" step="100"/>
+                                <input type="number" id="wDelay" class="form-control" placeholder="0" min="0" step="100"/>
+                                <div class="form-text small">Срабатывает до отдачи ответа или обрыва</div>
                             </div>
-                            <div class="col-12">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <label class="form-label fw-semibold mb-0">Тело ответа</label>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input" type="checkbox" id="wHandlebars"/>
-                                            <label class="form-check-label small text-muted" for="wHandlebars">
-                                                Handlebars-шаблон
-                                            </label>
-                                        </div>
-                                        <button type="button" class="btn btn-link btn-sm p-0 text-muted"
-                                                id="btnBeautifyWizard">
-                                            <i class="bi bi-magic"></i> Форматировать
-                                        </button>
-                                    </div>
+                        </div>
+
+                        <!-- Настройка чанков (Скрыты по умолчанию) -->
+                        <div id="wChunkedFields" class="d-none bg-warning-subtle p-3 rounded mb-3 border border-warning">
+                            <div class="small fw-bold mb-2"><i class="bi bi-info-circle me-1"></i>Настройка чанков</div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small mb-1">Количество кусков</label>
+                                    <input type="number" class="form-control" id="wChunkNumber" min="1" value="5">
                                 </div>
-                                <textarea id="wBody" class="form-control font-monospace"
-                                          rows="10"
-                                          placeholder='{"id": 1, "name": "example"}'></textarea>
-                                <div class="mt-1">
-                                    <span id="wBodyError" class="text-danger small d-none">
-                                        <i class="bi bi-exclamation-triangle"></i> Невалидный JSON
-                                    </span>
+                                <div class="col-md-6">
+                                    <label class="form-label small mb-1">Общее время (мс)</label>
+                                    <input type="number" class="form-control" id="wChunkDuration" min="100" value="1000">
+                                </div>
+                            </div>
+                            <div class="form-text small mt-1 text-dark opacity-75">
+                                Сервер разобьет тело ответа на указанное количество кусков и будет отдавать их постепенно.
+                            </div>
+                        </div>
+
+                        <!-- Нормальный ответ (Скрывается при жестком Fault) -->
+                        <div id="wNormalResponseGroup">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">HTTP статус</label>
+                                    <select id="wStatus" class="form-select">
+                                        <option value="200">200 OK</option>
+                                        <option value="201">201 Created</option>
+                                        <option value="204">204 No Content</option>
+                                        <option value="400">400 Bad Request</option>
+                                        <option value="401">401 Unauthorized</option>
+                                        <option value="403">403 Forbidden</option>
+                                        <option value="404">404 Not Found</option>
+                                        <option value="422">422 Unprocessable Entity</option>
+                                        <option value="500">500 Internal Server Error</option>
+                                        <option value="503">503 Service Unavailable</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold">Content-Type</label>
+                                    <select id="wContentType" class="form-select">
+                                        <option value="application/json">application/json</option>
+                                        <option value="application/xml">application/xml</option>
+                                        <option value="text/plain">text/plain</option>
+                                        <option value="text/html">text/html</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <label class="form-label fw-semibold mb-0">Тело ответа</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" id="wHandlebars"/>
+                                                <label class="form-check-label small text-muted" for="wHandlebars">
+                                                    Handlebars-шаблон
+                                                </label>
+                                            </div>
+                                            <button type="button" class="btn btn-link btn-sm p-0 text-muted"
+                                                    id="btnBeautifyWizard">
+                                                <i class="bi bi-magic"></i> Форматировать
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea id="wBody" class="form-control font-monospace"
+                                              rows="10"
+                                              placeholder='{"id": 1, "name": "example"}'></textarea>
+                                    <div class="mt-1">
+                                        <span id="wBodyError" class="text-danger small d-none">
+                                            <i class="bi bi-exclamation-triangle"></i> Невалидный JSON
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -318,7 +357,6 @@
         stubId:       /*[[${stubId}]]*/ null,
         stub:         /*[[${stubJson}]]*/ null
     };
-    // stub приходит как JSON-строка из Thymeleaf — парсим
     if (APP_DATA.stub && APP_DATA.stub !== 'null') {
         try { APP_DATA.stub = JSON.parse(APP_DATA.stub); }
         catch(e) { APP_DATA.stub = null; }
