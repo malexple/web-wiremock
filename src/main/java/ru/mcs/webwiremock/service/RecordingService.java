@@ -15,6 +15,8 @@ import ru.mcs.webwiremock.dto.wiremock.StubMapping;
 import ru.mcs.webwiremock.dto.wiremock.StubMetadata;
 
 import java.io.IOException;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +55,38 @@ public class RecordingService {
         List<StubMapping> mappings = result.getMappings();
         if (mappings == null) return List.of();
 
-        log.info("Recording stopped: {} stubs captured", mappings.size());
+        // R0036, R1400 и т.д. — короткая метка момента записи
+        String prefix = "R" + LocalTime.now().format(DateTimeFormatter.ofPattern("HHmm"));
+        log.info("Recording stopped: {} stubs captured, prefix={}", mappings.size(), prefix);
+
         return mappings.stream()
-                .map(this::toStubInfo)
+                .map(stub -> renameAndConvert(stub, prefix))
                 .toList();
+    }
+
+    private RecordingStubInfo renameAndConvert(StubMapping stub, String prefix) {
+        String url = apiTreeService.extractEffectivePath(stub.getRequest());
+        String method = (stub.getRequest() != null && stub.getRequest().getMethod() != null)
+                ? stub.getRequest().getMethod() : "ANY";
+
+        String newName = prefix + " " + method + " " + url;
+        stub.setName(newName);
+
+        try {
+            wiremockAdminClient.updateMapping(stub.getId(), stub);
+        } catch (Exception e) {
+            log.warn("Failed to rename recorded stub {}: {}", stub.getId(), e.getMessage());
+        }
+
+        return RecordingStubInfo.builder()
+                .id(stub.getId())
+                .name(newName)
+                .method(method)
+                .url(url)
+                .responseStatus(stub.getResponse() != null ? stub.getResponse().getStatus() : null)
+                .hasScenario(stub.getScenarioName() != null)
+                .scenarioName(stub.getScenarioName())
+                .build();
     }
 
     /**
