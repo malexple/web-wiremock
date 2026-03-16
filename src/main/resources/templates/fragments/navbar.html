@@ -40,6 +40,14 @@
                 Профили
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex align-items-center gap-1"
+               th:classappend="${activePage == 'recording'} ? 'active' : ''"
+               th:href="@{/recording}">
+                <i class="bi bi-collection-fill"></i>
+                Запись
+            </a>
+        </li>
     </ul>
     <div class="ms-auto d-flex align-items-center gap-2">
         <span class="badge bg-secondary" id="wiremockStatus">

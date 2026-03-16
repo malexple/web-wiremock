@@ -1,9 +1,23 @@
 package ru.mcs.webwiremock.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import ru.mcs.webwiremock.config.WiremockFeignConfig;
-import ru.mcs.webwiremock.dto.wiremock.*;
+import ru.mcs.webwiremock.dto.wiremock.LoggedRequestsWrapper;
+import ru.mcs.webwiremock.dto.wiremock.RecordingResult;
+import ru.mcs.webwiremock.dto.wiremock.RecordingSpec;
+import ru.mcs.webwiremock.dto.wiremock.RecordingStatus;
+import ru.mcs.webwiremock.dto.wiremock.ScenarioSetStateRequest;
+import ru.mcs.webwiremock.dto.wiremock.ScenariosWrapper;
+import ru.mcs.webwiremock.dto.wiremock.StubMapping;
+import ru.mcs.webwiremock.dto.wiremock.StubMappingsImport;
+import ru.mcs.webwiremock.dto.wiremock.StubMappingsWrapper;
 
 @FeignClient(
         name = "wiremock-admin",
@@ -60,14 +74,23 @@ public interface WiremockAdminClient {
     @GetMapping("/scenarios")
     ScenariosWrapper getAllScenarios();
 
-    /** Сбросить ВСЕ сценарии в состояние Started */
     @PostMapping("/scenarios/reset")
     void resetAllScenarios();
 
-    /** Установить конкретное состояние для конкретного сценария */
     @PutMapping("/scenarios/{scenarioName}/state")
     void setScenarioState(
             @PathVariable("scenarioName") String scenarioName,
             @RequestBody ScenarioSetStateRequest request
     );
+
+    // ─── Recording ────────────────────────────────────────────
+
+    @PostMapping("/recordings/start")
+    void startRecording(@RequestBody RecordingSpec spec);
+
+    @PostMapping("/recordings/stop")
+    RecordingResult stopRecording();
+
+    @GetMapping("/recordings/status")
+    RecordingStatus getRecordingStatus();
 }
