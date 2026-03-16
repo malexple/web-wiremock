@@ -9,7 +9,6 @@
     <div class="row justify-content-center">
         <div class="col-xl-9 col-xxl-8">
 
-            <!-- Заголовок — показываем режим -->
             <div class="d-flex align-items-center gap-3 mb-4">
                 <a th:href="@{/stubs}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i>
@@ -81,8 +80,6 @@
                                 <input type="text" id="wUrl" class="form-control font-monospace"
                                        placeholder="/api/v1/users/.*"/>
                             </div>
-
-                            <!-- Клиент -->
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Клиент (JWT externalId)</label>
                                 <select id="wClientSelect" class="form-select">
@@ -119,8 +116,6 @@
                         <i class="bi bi-reply-fill me-2 text-success"></i>Ответ
                     </div>
                     <div class="card-body">
-
-                        <!-- Fault Injection & Задержка -->
                         <div class="row g-3 mb-3 border-bottom pb-3">
                             <div class="col-md-7">
                                 <label class="form-label fw-semibold">Поведение ответа (Fault Injection)</label>
@@ -141,8 +136,6 @@
                                 <div class="form-text small">Срабатывает до отдачи ответа или обрыва</div>
                             </div>
                         </div>
-
-                        <!-- Настройка чанков (Скрыты по умолчанию) -->
                         <div id="wChunkedFields" class="d-none bg-warning-subtle p-3 rounded mb-3 border border-warning">
                             <div class="small fw-bold mb-2"><i class="bi bi-info-circle me-1"></i>Настройка чанков</div>
                             <div class="row g-3">
@@ -155,12 +148,7 @@
                                     <input type="number" class="form-control" id="wChunkDuration" min="100" value="1000">
                                 </div>
                             </div>
-                            <div class="form-text small mt-1 text-dark opacity-75">
-                                Сервер разобьет тело ответа на указанное количество кусков и будет отдавать их постепенно.
-                            </div>
                         </div>
-
-                        <!-- Нормальный ответ (Скрывается при жестком Fault) -->
                         <div id="wNormalResponseGroup">
                             <div class="row g-3">
                                 <div class="col-md-4">
@@ -214,47 +202,83 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
 
-            <!-- ШАГ 2: Query Parameters & Headers -->
+            <!-- ШАГ 2: Query Parameters, Headers, Body Patterns -->
             <div class="wizard-panel d-none" id="wizStep2">
+
+                <!-- Query Parameters -->
                 <div class="card shadow-sm mb-3">
                     <div class="card-header fw-semibold bg-warning bg-opacity-10">
                         <i class="bi bi-question-circle-fill me-2 text-warning"></i>Query Parameters
                     </div>
                     <div class="card-body">
-                        <p class="text-muted small mb-2">
-                            Условия совпадения query-параметров запроса.
-                        </p>
+                        <p class="text-muted small mb-2">Условия совпадения query-параметров запроса.</p>
                         <div id="queryParamsContainer"></div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2"
-                                id="btnAddQueryParam">
-                            <i class="bi bi-plus-circle"></i> Добавить параметр
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btnAddQueryParam">
+                            <i class="bi bi-plus-circle me-1"></i>Добавить параметр
                         </button>
                     </div>
                 </div>
 
-                <div class="card shadow-sm">
+                <!-- Request Headers -->
+                <div class="card shadow-sm mb-3">
                     <div class="card-header fw-semibold bg-info bg-opacity-10">
                         <i class="bi bi-list-columns-reverse me-2 text-info"></i>Заголовки запроса
                     </div>
                     <div class="card-body">
-                        <p class="text-muted small mb-2">
-                            Условия совпадения заголовков входящего запроса.
-                        </p>
+                        <p class="text-muted small mb-2">Условия совпадения заголовков входящего запроса.</p>
                         <div id="requestHeadersContainer"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btnAddRequestHeader">
+                            <i class="bi bi-plus-circle me-1"></i>Добавить заголовок
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Body Patterns -->
+                <div id="bodyPatternsSection" class="card shadow-sm">
+                    <div class="card-header fw-semibold"
+                         style="background-color: rgba(111,66,193,.08);">
+                        <i class="bi bi-body-text me-2" style="color:#6f42c1"></i>
+                        Условия на тело запроса
+                        <span class="text-muted fw-normal small ms-1">(Body Patterns — POST / PUT / PATCH)</span>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- Предупреждение при редактировании невалидного стаба (GET + bodyPatterns) -->
+                        <div id="bodyPatternsEditWarning" class="alert alert-danger small d-none py-2 mb-2">
+                        </div>
+
+                        <!-- Предупреждение для DELETE -->
+                        <div id="bodyPatternsDeleteWarning" class="alert alert-warning small d-none py-2 mb-2">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Метод <strong>DELETE</strong> редко используется с телом запроса.
+                            Технически допустимо, но некоторые клиенты могут игнорировать тело.
+                        </div>
+
+                        <!-- Подсказка для ANY -->
+                        <div id="bodyPatternsAnyHint" class="alert alert-info small d-none py-2 mb-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Метод <strong>ANY</strong> матчит все HTTP-методы включая POST, PUT и PATCH.
+                            Body Patterns сработает только если входящий запрос содержит тело.
+                        </div>
+
+                        <p class="text-muted small mb-2">
+                            Все условия объединяются через <strong>И</strong>.
+                            Для OR — создайте отдельный стаб с другим условием.
+                        </p>
+                        <div id="bodyPatternsContainer"></div>
                         <button type="button" class="btn btn-outline-secondary btn-sm mt-2"
-                                id="btnAddRequestHeader">
-                            <i class="bi bi-plus-circle"></i> Добавить заголовок
+                                id="btnAddBodyPattern">
+                            <i class="bi bi-plus-circle me-1"></i>Добавить условие на тело
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- ШАГ 3: Прокси -->
+            <!-- ШАГ 3: Опции / Прокси -->
             <div class="wizard-panel d-none" id="wizStep3">
                 <div class="card shadow-sm">
                     <div class="card-header fw-semibold bg-secondary bg-opacity-10">
@@ -264,24 +288,18 @@
                         <p class="text-muted small">
                             Опционально: автоматически создать прокси-стаб для этого же URL.
                             Прокси перехватит запросы <em>без</em> JWT-матчера и перенаправит их на указанный сервис.
-                            Приоритет прокси-стаба будет ниже клиентского.
                         </p>
-
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" id="wCreateProxy"/>
                             <label class="form-check-label fw-semibold" for="wCreateProxy">
                                 Создать прокси-стаб автоматически
                             </label>
                         </div>
-
                         <div id="proxySection" class="d-none">
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">URL сервиса назначения</label>
                                 <input type="text" id="wProxyUrl" class="form-control font-monospace"
                                        placeholder="http://real-service:8080"/>
-                                <div class="form-text">
-                                    WireMock добавит к нему исходный путь запроса.
-                                </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Метод прокси-стаба</label>
