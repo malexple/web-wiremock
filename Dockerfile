@@ -3,29 +3,32 @@ FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# Копируем gradle wrapper и build файлы отдельно для кэширования слоёв
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
 RUN ./gradlew dependencies --no-daemon --quiet || true
 
-# Копируем исходники и собираем
 COPY src ./src
 RUN ./gradlew bootJar --no-daemon -x test
 
 # ─── Stage 2: runtime ──────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 
+LABEL org.opencontainers.image.title="web-wiremock" \
+      org.opencontainers.image.description="Web UI for WireMock stub management" \
+      org.opencontainers.image.source="https://github.com/malexple/web-wiremock"
+
 WORKDIR /app
 
-# Создаём непривилегированного пользователя
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
 
-COPY --from=builder /app/build/libs/web-wiremock.jar app.jar
+COPY --from=builder --chown=appuser:appgroup /app/build/libs/web-wiremock.jar app.jar
+
+USER appuser
 
 EXPOSE 8080
 
 ENTRYPOINT ["java", \
             "-XX:+UseContainerSupport", \
             "-XX:MaxRAMPercentage=75.0", \
+            "-Djava.security.egd=file:/dev/./urandom", \
             "-jar", "app.jar"]

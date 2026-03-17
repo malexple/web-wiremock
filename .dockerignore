@@ -1,0 +1,13 @@
+.git
+.gradle
+.idea
+build
+out
+*.iml
+*.iws
+*.ipr
+wiremock/mappings
+wiremock/__files
+wiremock/profiles
+docker-compose*.yml
+README.md

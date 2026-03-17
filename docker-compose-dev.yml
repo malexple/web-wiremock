@@ -1,30 +1,32 @@
-version: '3.9'
-
-# ─── Запуск: docker-compose -f docker-compose-dev.yml up ───────
-# WireMock доступен на http://localhost:8888
+# ─── Dev запуск (только WireMock) ─────────────────────────────
+# docker-compose -f docker-compose-dev.yml up
 # Spring Boot запускаем из IntelliJ с профилем 'local'
-# (integration.wiremock-host=http://localhost:8888)
+# application-local.yml: integration.wiremock-host=http://localhost:8888
 
 services:
   wiremock:
     image: wiremock/wiremock:3.13.1
     container_name: wiremock-dev
     ports:
-      - "8888:8080"       # ← IntelliJ подключается сюда
-      - "8443:8443"       # HTTPS (если нужен)
+      - "8888:8080"
+      - "8443:8443"
     volumes:
       - ./wiremock/mappings:/home/wiremock/mappings
       - ./wiremock/__files:/home/wiremock/__files
       - ./wiremock/extensions:/var/wiremock/extensions
-      - ./wiremock/profiles:/app/wiremock/profiles
+      - ./wiremock/profiles:/home/wiremock/profiles
     command:
       - "--port=8080"
       - "--verbose"
       - "--local-response-templating"
       - "--permitted-system-keys=.*"
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8080/__admin/health" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/__admin/health"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+
+networks:
+  default:
+    name: wiremock-dev-net

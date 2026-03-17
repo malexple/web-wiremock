@@ -1,21 +1,15 @@
-version: '3.9'
-
-# ─── Запуск: docker-compose up ─────────────────────────────────
-# Сначала собрать JAR: ./gradlew bootJar
-# Оба сервиса в одной сети, UI доступен на http://localhost:8080
-
 services:
 
   wiremock:
     image: wiremock/wiremock:3.13.1
     container_name: wiremock-server
     ports:
-      - "8888:8080"       # Admin UI WireMock доступен снаружи для отладки
+      - "8888:8080"
     volumes:
       - ./wiremock/mappings:/home/wiremock/mappings
       - ./wiremock/__files:/home/wiremock/__files
       - ./wiremock/extensions:/var/wiremock/extensions
-      - ./wiremock/profiles:/app/wiremock/profiles
+      - ./wiremock/profiles:/home/wiremock/profiles
     command:
       - "--port=8080"
       - "--verbose"
@@ -24,13 +18,15 @@ services:
     networks:
       - wiremock-net
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8080/__admin/health" ]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/__admin/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s      # ← даём 30s на старт до начала проверок
     restart: unless-stopped
 
   web-wiremock:
+    image: malexple/web-wiremock:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -38,9 +34,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Переопределяем хост WireMock — используем имя сервиса внутри docker-сети
       INTEGRATION_WIREMOCK-HOST: http://wiremock:8080
       SPRING_PROFILES_ACTIVE: docker
+    volumes:
+      - ./wiremock/profiles:/app/wiremock/profiles
     depends_on:
       wiremock:
         condition: service_healthy
@@ -48,10 +45,11 @@ services:
       - wiremock-net
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8080/actuator/health" ]
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/actuator/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 40s
 
 networks:
   wiremock-net:
