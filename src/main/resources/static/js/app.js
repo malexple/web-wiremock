@@ -1,5 +1,8 @@
 'use strict';
 
+// ─── Context Path (один раз для всех JS) ──────────────────────
+const CTX = (document.querySelector('meta[name="ctx"]')?.content ?? '') + '/';
+
 // ─── Toast helper ──────────────────────────────────────────────
 const Toast = {
     show(message, type = 'success') {
@@ -112,7 +115,7 @@ async function checkWiremockHealth() {
     const badge = document.getElementById('wiremockStatus');
     if (!badge) return;
     try {
-        await fetch('/run-test', {
+        await fetch(CTX + 'run-test', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ method: 'GET', url: '/__admin/health' })

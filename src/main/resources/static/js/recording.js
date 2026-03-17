@@ -83,7 +83,7 @@ async function startRecording() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Запуск...';
 
     try {
-        await Api.post('/recording/start', { targetBaseUrl, urlPathPattern, repeatsAsScenarios });
+        await Api.post(CTX + 'recording/start', { targetBaseUrl, urlPathPattern, repeatsAsScenarios });
         currentTarget = targetBaseUrl;
         showRecordingState(targetBaseUrl);
         startPolling();
@@ -103,7 +103,7 @@ async function stopRecording() {
     stopPolling();
 
     try {
-        const stubs = await Api.post('/recording/stop', {});
+        const stubs = await Api.post(CTX + 'recording/stop', {});
         allRecordedStubs = stubs || [];
         showResultsState(allRecordedStubs);
         Toast.show(`Запись остановлена. Захвачено стабов: ${allRecordedStubs.length}`, 'success');
@@ -144,7 +144,7 @@ async function applyRecording() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Применение...';
 
     try {
-        await Api.post('/recording/apply', {
+        await Api.post(CTX + 'recording/apply', {
             keepIds:    checkedIds,
             deleteIds:  uncheckedIds,
             clientId,
@@ -159,7 +159,7 @@ async function applyRecording() {
         ].filter(Boolean).join(', ');
 
         Toast.show(`Применено: ${detail}`, 'success');
-        setTimeout(() => location.assign('/stubs'), 1500);
+        setTimeout(() => location.assign(CTX + 'stubs'), 1500);
     } catch (e) {
         Toast.show(e.message, 'danger');
         btn.disabled = false;
@@ -171,7 +171,7 @@ async function applyRecording() {
 function startPolling() {
     pollTimer = setInterval(async () => {
         try {
-            const status = await Api.get('/recording/status');
+            const status = await Api.get(CTX + 'recording/status');
             if (status !== 'Recording') {
                 stopPolling();
             }

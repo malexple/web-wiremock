@@ -55,7 +55,7 @@ function renderDetail(evt) {
         unmatchedBadge.classList.add('d-none');
         const link = document.getElementById('reqMatchedLink');
         link.textContent = evt.matchedStubId.id;
-        link.href = `/stubs?selectedId=${evt.matchedStubId.id}`;
+        link.href = CTX + 'stubs?selectedId=' + evt.matchedStubId.id;
     } else {
         matchedBlock.classList.add('d-none');
         unmatchedBadge.classList.toggle('d-none', !!evt.wasMatched);
@@ -192,7 +192,7 @@ function initButtons() {
     document.getElementById('btnRefreshLog')?.addEventListener('click', async () => {
         try {
             const params = new URLSearchParams(location.search);
-            const data   = await Api.get(`/requests/data?${params.toString()}`);
+            const data   = await Api.get(CTX + `requests/data?${params.toString()}`);
             rebuildTable(data);
             // Обновляем MAP
             requestsMap.clear();
@@ -204,7 +204,7 @@ function initButtons() {
     document.getElementById('btnClearLog')?.addEventListener('click', async () => {
         if (!confirm('Очистить журнал запросов WireMock?')) return;
         try {
-            await Api.delete('/requests');
+            await Api.delete(CTX + 'requests');
             Toast.show('Журнал очищен', 'success');
             setTimeout(() => location.reload(), 600);
         } catch (e) { Toast.show('Ошибка: ' + e.message, 'danger'); }

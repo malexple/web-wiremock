@@ -103,7 +103,7 @@ async function selectStub(stubId) {
     if (row) row.classList.add('selected');
 
     try {
-        const stub = await Api.get(`/stubs/${stubId}/json`);
+        const stub = await Api.get(`${CTX}/stubs/${stubId}/json`);
         currentStubId = stub.id;
         showStubPanel(stub);
     } catch (e) {
@@ -170,7 +170,7 @@ function initStubButtons() {
         }
         try {
             const stub = JSON.parse(ta.value);
-            await Api.put(`/stubs/${currentStubId}`, stub);
+            await Api.put(`${CTX}stubs/${currentStubId}`, stub);
             Toast.show('Стаб сохранён', 'success');
             location.reload();
         } catch (e) { Toast.show('Ошибка: ' + e.message, 'danger'); }
@@ -180,9 +180,9 @@ function initStubButtons() {
         if (!currentStubId) return;
         if (!confirm('Удалить стаб?')) return;
         try {
-            await Api.delete(`/stubs/${currentStubId}`);
+            await Api.delete(`${CTX}stubs/${currentStubId}`);
             Toast.show('Стаб удалён', 'success');
-            setTimeout(() => location.assign('/stubs'), 800);
+            setTimeout(() => location.assign(CTX + 'stubs'), 800);
         } catch (e) { Toast.show('Ошибка: ' + e.message, 'danger'); }
     });
 
@@ -194,7 +194,7 @@ function initStubButtons() {
             const url = document.getElementById('proxyBaseUrl').value.trim();
             if (!url) { Toast.show('Укажите URL сервиса', 'warning'); return; }
             try {
-                await fetch(`/proxy/from-stub/${currentStubId}?proxyBaseUrl=${encodeURIComponent(url)}`,
+                await fetch(`${CTX}proxy/from-stub/${currentStubId}?proxyBaseUrl=${encodeURIComponent(url)}`,
                             { method: 'POST' });
                 proxyModalInst.hide();
                 Toast.show('Прокси-стаб создан', 'success');
@@ -204,12 +204,12 @@ function initStubButtons() {
 
     document.getElementById('btnEdit').addEventListener('click', () => {
         if (!currentStubId) return;
-        location.assign(`/stubs/${currentStubId}/edit`);
+        location.assign(`${CTX}stubs/${currentStubId}/edit`);
     });
 
     document.getElementById('btnClone').addEventListener('click', () => {
         if (!currentStubId) return;
-        location.assign(`/stubs/${currentStubId}/clone`);
+        location.assign(`${CTX}stubs/${currentStubId}/clone`);
     });
 
 }
@@ -244,7 +244,7 @@ function initRunTest() {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
         try {
-            const result = await Api.post('/run-test', { method, url, headers, body });
+            const result = await Api.post(CTX + 'run-test', { method, url, headers, body });
             showRunTestResult(result);
         } catch (e) {
             Toast.show('Ошибка выполнения: ' + e.message, 'danger');

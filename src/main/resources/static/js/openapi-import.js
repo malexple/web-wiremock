@@ -397,7 +397,7 @@ async function createStubs() {
 
     if (errors === 0) {
         Toast.show(`Создано стабов: ${done}`, 'success');
-        setTimeout(() => location.assign('/stubs'), 1000);
+        setTimeout(() => location.assign('stubs'), 1000);
     } else {
         Toast.show(`Создано: ${done}, ошибок: ${errors}`, 'warning');
         btn.disabled = false;

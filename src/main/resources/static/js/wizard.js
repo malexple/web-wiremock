@@ -613,7 +613,7 @@ function buildStubJson() {
 
     const queryParams  = collectKvMap('queryParamsContainer');
     const reqHeaders   = collectKvMap('requestHeadersContainer');
-    const bodyPatterns = collectBodyPatterns(); // вернёт [] для GET/HEAD/OPTIONS
+    const bodyPatterns = collectBodyPatterns();
 
     const request = { method };
     request[urlType] = urlValue;
@@ -682,7 +682,6 @@ function buildPreview() {
     const createProxy = document.getElementById('wCreateProxy').checked;
     const proxyCard   = document.getElementById('wizProxyPreviewCard');
     proxyCard.classList.toggle('d-none', !createProxy);
-
     if (createProxy) {
         document.getElementById('wPreviewProxyJson').textContent =
             JSON.stringify(buildProxyJson(stub), null, 2);
@@ -696,23 +695,20 @@ async function saveStub() {
     btn.disabled = true;
     const originalHtml = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
     try {
         const stub = buildStubJson();
-        if (APP_DATA.editMode && APP_DATA.stubId) {
+        if (APP_DATA.editMode) {
             stub.id = APP_DATA.stubId;
-            await Api.put(`/stubs/${APP_DATA.stubId}`, stub);
+            await Api.put(`${CTX}stubs/${APP_DATA.stubId}`, stub);
         } else {
-            await Api.post('/stubs', stub);
+            await Api.post(CTX + 'stubs', stub);
         }
-
         if (!APP_DATA.editMode && document.getElementById('wCreateProxy').checked) {
             const proxyUrl = document.getElementById('wProxyUrl').value.trim();
-            if (proxyUrl) await Api.post('/stubs', buildProxyJson(stub));
+            if (proxyUrl) await Api.post(CTX + 'stubs', buildProxyJson(stub));
         }
-
-        Toast.show(APP_DATA.editMode ? 'Обновлено!' : 'Сохранено!', 'success');
-        setTimeout(() => location.assign('/stubs'), 1000);
+        Toast.show(APP_DATA.editMode ? 'Стаб обновлён!' : 'Стаб создан!', 'success');
+        setTimeout(() => location.assign(CTX + 'stubs'), 1000);
     } catch (e) {
         Toast.show('Ошибка: ' + e.message, 'danger');
     } finally {
@@ -725,12 +721,13 @@ async function saveStub() {
 
 function prefillWizard(stub) {
     if (!stub) return;
-    const req  = stub.request  || {};
-    const resp = stub.response || {};
+    const req  = stub.request;
+    const resp = stub.response;
     const meta = stub.metadata || {};
 
-    // Шаг 0: Запрос
-    document.getElementById('wName').value   = stub.name || '';
+    // 0. Название
+    document.getElementById('wName').value = stub.name;
+
     const method = ['GET','POST','PUT','DELETE','PATCH','ANY'].includes(req.method)
         ? req.method : 'GET';
     document.getElementById('wMethod').value = method;
@@ -746,7 +743,7 @@ function prefillWizard(stub) {
 
     const clientId = meta.clientId || req.customMatcher?.parameters?.payload?.externalId;
     if (clientId) {
-        const select   = document.getElementById('wClientSelect');
+        const select = document.getElementById('wClientSelect');
         const existing = [...select.options].find(o => o.value === clientId);
         if (existing) {
             select.value = clientId;
@@ -758,7 +755,7 @@ function prefillWizard(stub) {
         }
     }
 
-    // Шаг 1: Ответ
+    // 1. Response
     const faultSelect = document.getElementById('wFaultType');
     if (resp.fault) {
         faultSelect.value = resp.fault;
@@ -781,7 +778,7 @@ function prefillWizard(stub) {
         if ([...statusSel.options].some(o => o.value === sv)) statusSel.value = sv;
     }
 
-    const ct    = resp.headers?.['Content-Type'] || resp.headers?.['content-type'] || 'application/json';
+    const ct = resp.headers?.['Content-Type'] || resp.headers?.['content-type'] || 'application/json';
     const ctSel = document.getElementById('wContentType');
     if ([...ctSel.options].some(o => o.value === ct)) ctSel.value = ct;
 
@@ -791,11 +788,11 @@ function prefillWizard(stub) {
     } else if (resp.body) {
         bodyStr = resp.body;
     }
-    document.getElementById('wBody').value = bodyStr;
+    document.getElementById('wBody').value         = bodyStr;
     document.getElementById('wHandlebars').checked =
         Array.isArray(resp.transformers) && resp.transformers.includes('response-template');
 
-    // Шаг 2: Query params
+    // 2. Query params
     document.getElementById('queryParamsContainer').innerHTML = '';
     if (req.queryParameters) {
         for (const [key, matcher] of Object.entries(req.queryParameters)) {
@@ -806,15 +803,13 @@ function prefillWizard(stub) {
             const opEntry = Object.entries(matcher)[0];
             if (opEntry) {
                 const opSel = row.querySelector('.kv-op');
-                if (opSel && [...opSel.options].some(o => o.value === opEntry[0])) {
-                    opSel.value = opEntry[0];
-                }
+                if (opSel && [...opSel.options].some(o => o.value === opEntry[0])) opSel.value = opEntry[0];
                 row.querySelector('.kv-value').value = opEntry[1];
             }
         }
     }
 
-    // Шаг 2: Request headers
+    // 2. Request headers
     document.getElementById('requestHeadersContainer').innerHTML = '';
     if (req.headers) {
         for (const [key, matcher] of Object.entries(req.headers)) {
@@ -825,30 +820,25 @@ function prefillWizard(stub) {
             const opEntry = Object.entries(matcher)[0];
             if (opEntry) {
                 const opSel = row.querySelector('.kv-op');
-                if (opSel && [...opSel.options].some(o => o.value === opEntry[0])) {
-                    opSel.value = opEntry[0];
-                }
+                if (opSel && [...opSel.options].some(o => o.value === opEntry[0])) opSel.value = opEntry[0];
                 row.querySelector('.kv-value').value = opEntry[1];
             }
         }
     }
 
-    // Шаг 2: Body patterns + видимость секции
+    // 2. Body patterns
     document.getElementById('bodyPatternsContainer').innerHTML = '';
-
-    // Обновляем видимость секции по методу
     updateBodyPatternsVisibility(method);
 
-    // Edit mode: стаб с bodyPatterns на методе без тела — показываем предупреждение
+    // Edit mode + bodyPatterns при несовместимом методе
     if (APP_DATA.editMode && METHODS_NO_BODY.includes(method) && req.bodyPatterns?.length) {
         const warn = document.getElementById('bodyPatternsEditWarning');
         warn.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>
-            Этот стаб содержит Body Patterns, но метод <strong>${escHtml(method)}</strong>
-            не поддерживает тело запроса. При сохранении Body Patterns будут удалены.`;
+            Метод <strong>${escHtml(method)}</strong> не поддерживает Body Patterns.
+            Они были сохранены в стабе и будут удалены при сохранении.`;
         warn.classList.remove('d-none');
     }
 
-    // Заполняем строки bodyPatterns (для редактирования методов с телом)
     if (req.bodyPatterns?.length) {
         req.bodyPatterns.forEach(p => addBodyPatternRow(p));
     }

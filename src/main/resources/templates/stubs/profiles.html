@@ -31,11 +31,10 @@
 
             <!-- Текущее состояние WireMock -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header fw-semibold bg-dark bg-opacity-10 d-flex
-                    align-items-center justify-content-between">
+                <div class="card-header fw-semibold bg-dark bg-opacity-10 d-flex align-items-center justify-content-between">
                     <span><i class="bi bi-activity me-2 text-success"></i>Текущие стабы в WireMock</span>
-                    <a href="/stubs" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-box-arrow-up-right"></i> Открыть
+                    <a th:href="@{/stubs}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-box-arrow-up-right">Открыть</i>
                     </a>
                 </div>
                 <div class="card-body py-2">

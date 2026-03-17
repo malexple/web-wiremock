@@ -1,12 +1,12 @@
 'use strict';
 
 // ─── State ────────────────────────────────────────────────────
-let currentScenarioName = null;
-let pollingTimer        = null;
-let importModalInst     = null;
+let currentScenarioName  = null;
+let pollingTimer         = null;
+let importModalInst      = null;
 let newScenarioModalInst = null;
-let availableStubs      = [];
-let wizardCurrentStep   = 1;
+let availableStubs       = [];
+let wizardCurrentStep    = 1;
 
 // ─── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -68,7 +68,7 @@ function renderDetail(sc) {
     document.getElementById('scenarioEmptyState').classList.add('d-none');
     document.getElementById('scenarioDetailContent').classList.remove('d-none');
 
-    document.getElementById('detailName').textContent = sc.name;
+    document.getElementById('detailName').textContent         = sc.name;
     document.getElementById('detailCurrentState').textContent = sc.currentState;
 
     const globalBadge    = document.getElementById('detailGlobalBadge');
@@ -104,8 +104,8 @@ function renderStepsChain(steps, currentState, completed) {
         return;
     }
     container.innerHTML = steps.map((step, idx) => {
-        const isActive = step.requiredState === currentState;
-        const isPast   = !isActive && isStepPast(step, steps, currentState, completed);
+        const isActive  = step.requiredState === currentState;
+        const isPast    = !isActive && isStepPast(step, steps, currentState, completed);
         const cardClass = isActive
             ? 'border-primary bg-primary-subtle'
             : isPast ? 'border-success bg-success-subtle opacity-75'
@@ -232,12 +232,10 @@ function initButtons() {
         } catch (e) { Toast.show(e.message, 'danger'); }
     });
 
-    // Кнопки открытия мастера
     const openWizard = () => openNewScenarioWizard();
     document.getElementById('btnNewScenario').addEventListener('click', openWizard);
     document.getElementById('btnNewScenarioEmpty').addEventListener('click', openWizard);
 
-    // Импорт
     document.getElementById('btnImportScenario').addEventListener('click', () =>
         importModalInst.show());
 
@@ -262,23 +260,20 @@ function initButtons() {
 // ═══ Мастер создания сценария ═════════════════════════════════
 
 async function openNewScenarioWizard() {
-    // Сбрасываем состояние мастера
     wizardCurrentStep = 1;
     document.getElementById('wizScenarioName').value = '';
-    document.getElementById('wizExternalId').value = '';
+    document.getElementById('wizExternalId').value   = '';
     document.querySelector('input[name="wizClientMode"][value="client"]').checked = true;
     document.getElementById('wizExternalIdBlock').classList.remove('d-none');
     document.getElementById('wizGlobalWarning').classList.add('d-none');
     updateWizardStep(1);
 
-    // Загружаем доступные стабы для шага 2
     try {
         availableStubs = await Api.get('/scenarios/available-stubs');
     } catch (e) {
         availableStubs = [];
     }
 
-    // Добавляем первый шаг по умолчанию
     document.getElementById('wizStepsList').innerHTML = '';
     addWizardStep();
 
@@ -286,7 +281,6 @@ async function openNewScenarioWizard() {
 }
 
 function initWizard() {
-    // Переключение client/global
     document.querySelectorAll('input[name="wizClientMode"]').forEach(radio => {
         radio.addEventListener('change', () => {
             const isGlobal = radio.value === 'global' && radio.checked;
@@ -297,41 +291,32 @@ function initWizard() {
         });
     });
 
-    // Навигация мастера
     document.getElementById('btnWizNext').addEventListener('click', () => {
         if (!validateWizardStep(wizardCurrentStep)) return;
         if (wizardCurrentStep === 2) renderWizardSummary();
         updateWizardStep(wizardCurrentStep + 1);
     });
 
-    document.getElementById('btnWizPrev').addEventListener('click', () =>
-        updateWizardStep(wizardCurrentStep - 1));
+    document.getElementById('btnWizPrev').addEventListener('click', () => {
+        updateWizardStep(wizardCurrentStep - 1);
+    });
 
-    // Добавить шаг
     document.getElementById('btnAddStep').addEventListener('click', addWizardStep);
-
-    // Создать сценарий
     document.getElementById('btnWizCreate').addEventListener('click', submitNewScenario);
 }
 
 function updateWizardStep(step) {
     wizardCurrentStep = step;
-
-    // Показываем/скрываем панели
     document.getElementById('wizardStep1').classList.toggle('d-none', step !== 1);
     document.getElementById('wizardStep2').classList.toggle('d-none', step !== 2);
     document.getElementById('wizardStep3').classList.toggle('d-none', step !== 3);
-
-    // Кнопки
     document.getElementById('btnWizPrev').classList.toggle('d-none', step === 1);
     document.getElementById('btnWizNext').classList.toggle('d-none', step === 3);
     document.getElementById('btnWizCreate').classList.toggle('d-none', step !== 3);
-
-    // Индикатор шагов
     document.querySelectorAll('.wizard-step-dot').forEach(dot => {
         const n = parseInt(dot.dataset.step);
         dot.classList.toggle('active', n === step);
-        dot.classList.toggle('done', n < step);
+        dot.classList.toggle('done',   n < step);
     });
 }
 
@@ -347,7 +332,7 @@ function validateWizardStep(step) {
             'input[name="wizClientMode"][value="client"]').checked;
         if (isClient && !document.getElementById('wizExternalId').value.trim()) {
             document.getElementById('wizExternalId').focus();
-            Toast.show('Введите externalId или выберите "Глобальный"', 'warning');
+            Toast.show('Введите externalId клиента', 'warning');
             return false;
         }
     }
@@ -363,7 +348,7 @@ function validateWizardStep(step) {
                 const urlPath = row.querySelector('.wiz-url').value.trim();
                 if (!urlPath) {
                     row.querySelector('.wiz-url').focus();
-                    Toast.show('Укажите URL для нового стаба', 'warning');
+                    Toast.show('Укажите URL для шага', 'warning');
                     return false;
                 }
             }
@@ -377,9 +362,8 @@ function addWizardStep() {
     const index   = list.querySelectorAll('.wiz-step-row').length + 1;
     const isFirst = index === 1;
 
-    // Формируем опции стабов для select
     const stubOptions = availableStubs
-        .filter(s => !s.scenarioName) // только стабы не в сценарии
+        .filter(s => !s.scenarioName)
         .map(s => `<option value="${escHtml(s.id)}">${escHtml(s.name || s.id)}</option>`)
         .join('');
 
@@ -387,24 +371,22 @@ function addWizardStep() {
     div.className = 'wiz-step-row card p-2';
     div.innerHTML = `
         <div class="d-flex align-items-center gap-2 mb-2">
-            <span class="badge bg-secondary">Шаг ${index}</span>
+            <span class="badge bg-secondary">${index}</span>
             <input type="text" class="form-control form-control-sm wiz-state-label"
-                   placeholder="${isFirst ? 'Started (фиксировано)' : 'Название состояния (Step ' + index + ')'}"
+                   placeholder="${isFirst ? 'Started' : `Step ${index}`}"
                    value="${isFirst ? 'Started' : ''}"
-                   ${isFirst ? 'disabled' : ''}/>
-            ${!isFirst
-                ? `<button type="button" class="btn btn-sm btn-outline-danger wiz-btn-remove flex-shrink-0">
-                       <i class="bi bi-x-lg"></i>
-                   </button>`
-                : ''}
+                   ${isFirst ? 'disabled' : ''}>
+            ${!isFirst ? `<button type="button" class="btn btn-sm btn-outline-danger wiz-btn-remove flex-shrink-0">
+                <i class="bi bi-x-lg"></i>
+            </button>` : ''}
         </div>
         <div class="mb-2">
             <select class="form-select form-select-sm wiz-src-type">
-                <option value="new">Создать новый стаб</option>
-                ${stubOptions ? '<option value="clone">Клонировать существующий стаб</option>' : ''}
+                <option value="new">Новый стаб</option>
+                ${stubOptions ? `<option value="clone">Клонировать стаб</option>` : ''}
             </select>
         </div>
-        <!-- Поля нового стаба -->
+        <!-- Новый стаб -->
         <div class="wiz-new-stub-fields">
             <div class="row g-2">
                 <div class="col-3">
@@ -415,11 +397,11 @@ function addWizardStep() {
                 </div>
                 <div class="col-9">
                     <input type="text" class="form-control form-control-sm wiz-url"
-                           placeholder="/api/v1/resource"/>
+                           placeholder="/api/v1/resource">
                 </div>
                 <div class="col-4">
                     <input type="number" class="form-control form-control-sm wiz-status"
-                           value="200" min="100" max="599" placeholder="Статус"/>
+                           value="200" min="100" max="599">
                 </div>
                 <div class="col-8">
                     <select class="form-select form-select-sm wiz-content-type">
@@ -434,14 +416,13 @@ function addWizardStep() {
                 </div>
             </div>
         </div>
-        <!-- Поля клонирования (скрыты по умолчанию) -->
+        <!-- Клон -->
         <div class="wiz-clone-fields d-none">
             <select class="form-select form-select-sm wiz-clone-select">
                 ${stubOptions}
             </select>
         </div>`;
 
-    // Переключение new/clone
     div.querySelector('.wiz-src-type').addEventListener('change', e => {
         div.querySelector('.wiz-new-stub-fields')
             .classList.toggle('d-none', e.target.value !== 'new');
@@ -449,7 +430,6 @@ function addWizardStep() {
             .classList.toggle('d-none', e.target.value !== 'clone');
     });
 
-    // Удалить шаг
     div.querySelector('.wiz-btn-remove')?.addEventListener('click', () => {
         div.remove();
         renumberWizardSteps();
@@ -460,42 +440,37 @@ function addWizardStep() {
 
 function renumberWizardSteps() {
     document.querySelectorAll('#wizStepsList .wiz-step-row').forEach((row, i) => {
-        row.querySelector('.badge').textContent = `Шаг ${i + 1}`;
+        row.querySelector('.badge').textContent = i + 1;
         if (i > 0) {
             const inp = row.querySelector('.wiz-state-label');
-            if (inp && !inp.value) inp.placeholder = `Название состояния (Step ${i + 1})`;
+            if (inp && !inp.value) inp.placeholder = `Step ${i + 1}`;
         }
     });
 }
 
 function renderWizardSummary() {
-    const name       = document.getElementById('wizScenarioName').value.trim();
-    const isGlobal   = document.querySelector(
+    const name     = document.getElementById('wizScenarioName').value.trim();
+    const isGlobal = document.querySelector(
         'input[name="wizClientMode"][value="global"]').checked;
-    const externalId = isGlobal ? null
-        : document.getElementById('wizExternalId').value.trim();
+    const externalId = isGlobal ? null : document.getElementById('wizExternalId').value.trim();
+    const rows       = document.querySelectorAll('#wizStepsList .wiz-step-row');
 
-    const rows = document.querySelectorAll('#wizStepsList .wiz-step-row');
     let stateChain = ['Started'];
     rows.forEach((row, i) => {
         if (i === 0) return;
-        const label = row.querySelector('.wiz-state-label').value.trim()
-                      || `Step ${i + 1}`;
+        const label = row.querySelector('.wiz-state-label').value.trim() || `Step ${i + 1}`;
         stateChain.push(label);
     });
 
-    let html = `
-        <div class="mb-2">
-            <strong>Сценарий:</strong>
-            <span class="font-monospace ms-1">${escHtml(name)}</span>
-        </div>
-        <div class="mb-3">
-            <strong>Клиент:</strong>
-            ${externalId
-                ? `<span class="badge bg-info text-dark ms-1">${escHtml(externalId)}</span>`
-                : '<span class="badge bg-warning text-dark ms-1">GLOBAL</span>'}
-        </div>
-        <div class="small text-muted mb-2 fw-semibold">Цепочка состояний:</div>
+    let html = `<div class="mb-2"><strong>Сценарий:</strong>
+        <span class="font-monospace ms-1">${escHtml(name)}</span></div>`;
+    html += `<div class="mb-3"><strong>Тип:</strong> `;
+    if (isGlobal) {
+        html += `<span class="badge bg-warning text-dark ms-1">GLOBAL</span>`;
+    } else {
+        html += `<span class="badge bg-info text-dark ms-1">${escHtml(externalId)}</span>`;
+    }
+    html += `</div><div class="mb-3"><strong>Шаги:</strong>
         <div class="d-flex align-items-center gap-1 flex-wrap mb-3">`;
 
     stateChain.forEach((state, i) => {
@@ -534,17 +509,14 @@ async function submitNewScenario() {
     const externalId = isGlobal
         ? null : document.getElementById('wizExternalId').value.trim() || null;
 
-    const rows = document.querySelectorAll('#wizStepsList .wiz-step-row');
+    const rows  = document.querySelectorAll('#wizStepsList .wiz-step-row');
     const steps = Array.from(rows).map((row, i) => {
         const srcType    = row.querySelector('.wiz-src-type').value;
         const stateLabel = i === 0 ? 'Started'
             : (row.querySelector('.wiz-state-label').value.trim() || `Step ${i + 1}`);
 
         if (srcType === 'clone') {
-            return {
-                stateLabel,
-                sourceStubId: row.querySelector('.wiz-clone-select').value
-            };
+            return { stateLabel, sourceStubId: row.querySelector('.wiz-clone-select').value };
         }
         return {
             stateLabel,
@@ -561,7 +533,7 @@ async function submitNewScenario() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Создаём...';
 
     try {
-        const result = await Api.post('/scenarios', { scenarioName: name, externalId, steps });
+        await Api.post('/scenarios', { scenarioName: name, externalId, steps });
         newScenarioModalInst.hide();
         Toast.show(`Сценарий '${name}' создан (${steps.length} шагов)`, 'success');
         setTimeout(() => location.reload(), 800);

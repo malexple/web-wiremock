@@ -37,15 +37,15 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/stubs">
+        <a class="navbar-brand fw-bold" href="@{/stubs}">
             <i class="bi bi-wifi me-1"></i>Web WireMock
         </a>
         <div class="navbar-nav ms-3 flex-row gap-1">
-            <a class="nav-link px-2" href="/stubs">Стабы</a>
-            <a class="nav-link px-2" href="/scenarios">Сценарии</a>
-            <a class="nav-link px-2" href="/profiles">Профили</a>
-            <a class="nav-link px-2" href="/requests">Запросы</a>
-            <a class="nav-link active px-2 fw-semibold" href="/recording">
+            <a class="nav-link px-2" th:href="@{/stubs}">Стабы</a>
+            <a class="nav-link px-2" th:href="@{/scenarios}">Сценарии</a>
+            <a class="nav-link px-2" th:href="@{/profiles}">Профили</a>
+            <a class="nav-link px-2" th:href="@{/requests}">Запросы</a>
+            <a class="nav-link active px-2 fw-semibold" th:href="@{/recording}">
                 <i class="bi bi-record-circle me-1 text-danger"></i>Запись
             </a>
         </div>
@@ -141,7 +141,7 @@
         </div>
 
         <div class="d-flex justify-content-between">
-            <a href="/stubs" class="btn btn-outline-secondary">
+            <a th:href="@{/stubs}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i>Назад
             </a>
             <button id="btnStartRecording" class="btn btn-danger px-4">
