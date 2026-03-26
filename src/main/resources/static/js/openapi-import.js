@@ -66,7 +66,7 @@ async function loadFromUrl() {
 
     setLoading(true);
     try {
-        const data = await Api.get(`/openapi/fetch?url=${encodeURIComponent(url)}`);
+        const data = await Api.get(CTX + `openapi/fetch?url=${encodeURIComponent(url)}`);
         parseAndRender(data);
     } catch(e) {
         showError('Ошибка загрузки: ' + e.message);

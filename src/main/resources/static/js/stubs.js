@@ -104,7 +104,7 @@ async function selectStub(stubId) {
     if (row) row.classList.add('selected');
 
     try {
-        const stub = await Api.get(`${CTX}/stubs/${stubId}/json`);
+        const stub = await Api.get(CTX + `stubs/${stubId}/json`);
         currentStubId = stub.id;
         showStubPanel(stub);
     } catch (e) {

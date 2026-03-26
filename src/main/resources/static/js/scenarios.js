@@ -269,7 +269,7 @@ async function openNewScenarioWizard() {
     updateWizardStep(1);
 
     try {
-        availableStubs = await Api.get('/scenarios/available-stubs');
+        availableStubs = await Api.get(CTX + 'scenarios/available-stubs');
     } catch (e) {
         availableStubs = [];
     }
@@ -550,8 +550,8 @@ function startPolling() {
     pollingTimer = setInterval(async () => {
         if (!currentScenarioName) return;
         try {
-            const data = await Api.get(
-                `/scenarios/${encodeURIComponent(currentScenarioName)}/state`);
+            const data = await Api.get(CTX +
+                `scenarios/${encodeURIComponent(currentScenarioName)}/state`);
             renderDetail(data);
             updateListCard(data);
         } catch { /* тихо */ }
