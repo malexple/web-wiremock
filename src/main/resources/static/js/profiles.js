@@ -36,7 +36,7 @@ function initProfileActions() {
         } else if (e.target.closest('.btn-apply-merge')) {
             await applyProfile(name, 'merge');
         } else if (e.target.closest('.btn-export-profile')) {
-            location.assign(`${CTX}profiles/${encodeURIComponent(name)}/export`);
+            location.assign(CTX + `profiles/${encodeURIComponent(name)}/export`);
         } else if (e.target.closest('.btn-overwrite-profile')) {
             if (!confirm(`Перезаписать профиль «${name}» текущими стабами?`)) return;
             await saveProfile(name, null);

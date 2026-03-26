@@ -182,14 +182,14 @@ function updateListCard(sc) {
 function initButtons() {
     document.getElementById('btnResetAll').addEventListener('click', async () => {
         if (!confirm('Сбросить ВСЕ сценарии в Started?')) return;
-        await actionWithToast(() => Api.post('/scenarios/reset-all'), 'Все сценарии сброшены');
+        await actionWithToast(() => Api.post(CTX +'scenarios/reset-all'), 'Все сценарии сброшены');
         if (currentScenarioName) await loadScenarioDetail(currentScenarioName);
     });
 
     document.getElementById('btnResetScenario').addEventListener('click', async () => {
         if (!currentScenarioName) return;
         await actionWithToast(
-            () => Api.post(`/scenarios/${encodeURIComponent(currentScenarioName)}/reset`),
+            () => Api.post(CTX + `scenarios/${encodeURIComponent(currentScenarioName)}/reset`),
             `Сценарий '${currentScenarioName}' сброшен`
         );
         await loadScenarioDetail(currentScenarioName);
@@ -215,7 +215,7 @@ function initButtons() {
 
     document.getElementById('btnExportScenario').addEventListener('click', () => {
         if (!currentScenarioName) return;
-        location.assign(`/scenarios/${encodeURIComponent(currentScenarioName)}/export`);
+        location.assign(CTX + `scenarios/${encodeURIComponent(currentScenarioName)}/export`);
     });
 
     document.getElementById('btnDeleteScenario').addEventListener('click', async () => {
@@ -533,7 +533,7 @@ async function submitNewScenario() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Создаём...';
 
     try {
-        await Api.post('/scenarios', { scenarioName: name, externalId, steps });
+        await Api.post(CTX + 'cenarios', { scenarioName: name, externalId, steps });
         newScenarioModalInst.hide();
         Toast.show(`Сценарий '${name}' создан (${steps.length} шагов)`, 'success');
         setTimeout(() => location.reload(), 800);

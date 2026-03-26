@@ -1,5 +1,7 @@
 'use strict';
 
+const APPDATA = JSON.parse(document.getElementById('appdata').textContent);
+
 let parsedSpec = null;
 let allEndpoints = [];
 let activeTag = null;
@@ -384,7 +386,7 @@ async function createStubs() {
     for (const { ep, status } of selected) {
         const stub = buildStub(ep, status);
         try {
-            await Api.post('/stubs', stub);
+            await Api.post(CTX + 'stubs', stub);
             done++;
         } catch(e) {
             errors++;
@@ -397,7 +399,7 @@ async function createStubs() {
 
     if (errors === 0) {
         Toast.show(`Создано стабов: ${done}`, 'success');
-        setTimeout(() => location.assign('stubs'), 1000);
+        setTimeout(() => location.assign(CTX + 'stubs'), 1000);
     } else {
         Toast.show(`Создано: ${done}, ошибок: ${errors}`, 'warning');
         btn.disabled = false;

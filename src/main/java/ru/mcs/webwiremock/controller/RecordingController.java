@@ -21,6 +21,7 @@ import ru.mcs.webwiremock.dto.wiremock.StubMapping;
 import ru.mcs.webwiremock.service.ProfileService;
 import ru.mcs.webwiremock.service.RecordingService;
 import ru.mcs.webwiremock.service.StubService;
+import ru.mcs.webwiremock.util.JsonUtil;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -33,38 +34,44 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RecordingController {
 
-    private final RecordingService recordingService;
-    private final StubService stubService;
-    private final ProfileService profileService;
+    private final RecordingService   recordingService;
+    private final StubService        stubService;
+    private final ProfileService     profileService;
     private final WiremockProperties wiremockProperties;
+    private final JsonUtil           jsonUtil;
 
     @GetMapping
     public String recordingPage(Model model) {
-        // Прокси-стабы — источник для Target URL
+        // Target URL
         List<Map<String, String>> proxyStubs = stubService.getAllStubs().stream()
                 .filter(s -> s.getMetadata() != null && Boolean.TRUE.equals(s.getMetadata().getProxyStub()))
                 .map(this::toProxyStubMap)
                 .toList();
-
         List<ClientInfo> clients = stubService.getClients();
-
         List<String> profiles = profileService.listProfiles().stream()
                 .map(p -> p.getName())
                 .toList();
-
         String currentStatus = "NeverStarted";
         try {
             RecordingStatus status = recordingService.getStatus();
             if (status.getStatus() != null) currentStatus = status.getStatus();
         } catch (Exception e) {
-            log.debug("Could not fetch recording status: {}", e.getMessage());
+            log.debug("Could not fetch recording status {}", e.getMessage());
         }
 
-        model.addAttribute("proxyStubs", proxyStubs);
-        model.addAttribute("clients", clients);
-        model.addAttribute("profiles", profiles);
+        model.addAttribute("proxyStubs",    proxyStubs);
+        model.addAttribute("clients",       clients);
+        model.addAttribute("profiles",      profiles);
         model.addAttribute("currentStatus", currentStatus);
-        model.addAttribute("wiremockHost", wiremockProperties.getWiremockHost());
+        model.addAttribute("wiremockHost",  wiremockProperties.getWiremockHost());
+
+        Map<String, Object> appData = new LinkedHashMap<>();
+        appData.put("proxyStubs",    proxyStubs);
+        appData.put("clients",       clients);
+        appData.put("profiles",      profiles);
+        appData.put("currentStatus", currentStatus);
+        model.addAttribute("appDataJson", jsonUtil.toHtmlSafeJson(appData));
+
         return "recording/index";
     }
 

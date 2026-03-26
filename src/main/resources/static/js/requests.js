@@ -1,9 +1,11 @@
 'use strict';
 
+const APPDATA = JSON.parse(document.getElementById('appdata').textContent);
+
 // ─── State ────────────────────────────────────────────────────
 // APP_DATA.requests — полный список объектов LoggedRequest из Thymeleaf
 const requestsMap = new Map(
-    (APP_DATA.requests || []).map(r => [r.id, r])
+    (APPDATA.requests || []).map(r => [r.id, r])
 );
 
 document.addEventListener('DOMContentLoaded', () => {

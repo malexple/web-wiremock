@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import ru.mcs.webwiremock.dto.ui.ApiResponse;
 import ru.mcs.webwiremock.dto.wiremock.ServeEvent;
 import ru.mcs.webwiremock.service.RequestLogService;
+import ru.mcs.webwiremock.util.JsonUtil;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/requests")
@@ -21,6 +24,7 @@ import java.util.List;
 public class RequestLogController {
 
     private final RequestLogService requestLogService;
+    private final JsonUtil          jsonUtil;
 
     @GetMapping
     public String requestLogPage(
@@ -39,20 +43,24 @@ public class RequestLogController {
         } else {
             events = requestLogService.getRecentRequests(null);
         }
-
         List<ServeEvent> filtered = requestLogService
                 .filterRequests(events, method, urlContains, bodyContains);
 
-        model.addAttribute("requests", filtered);
-        model.addAttribute("totalCount", filtered.size());
-        model.addAttribute("sinceMinutes", sinceMinutes);
-        model.addAttribute("filterMethod", method);
-        model.addAttribute("filterUrl", urlContains);
-        model.addAttribute("filterBody", bodyContains);
+        model.addAttribute("requests",      filtered);
+        model.addAttribute("totalCount",    filtered.size());
+        model.addAttribute("sinceMinutes",  sinceMinutes);
+        model.addAttribute("filterMethod",  method);
+        model.addAttribute("filterUrl",     urlContains);
+        model.addAttribute("filterBody",    bodyContains);
         model.addAttribute("showUnmatched", unmatched);
+
+        Map<String, Object> appData = new LinkedHashMap<>();
+        appData.put("requests", filtered);
+        model.addAttribute("appDataJson", jsonUtil.toHtmlSafeJson(appData));
 
         return "requests/index";
     }
+
 
     @GetMapping("/data")
     @ResponseBody

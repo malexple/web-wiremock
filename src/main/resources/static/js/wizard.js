@@ -1,5 +1,11 @@
 'use strict';
 
+const APPDATA = JSON.parse(document.getElementById('appdata').textContent);
+
+if (APPDATA.editMode || APPDATA.cloneMode || APPDATA.stub) {
+    prefillWizard(APPDATA.stub);
+}
+
 const TOTAL_STEPS = 5;
 let currentStep = 0;
 
@@ -168,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btnWizSave').addEventListener('click', saveStub);
 
-    if ((APP_DATA.editMode || APP_DATA.cloneMode) && APP_DATA.stub) {
-        prefillWizard(APP_DATA.stub);
+    if ((APPDATA.editMode || APPDATA.cloneMode) && APPDATA.stub) {
+        prefillWizard(APPDATA.stub);
     }
 });
 
@@ -697,17 +703,17 @@ async function saveStub() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
     try {
         const stub = buildStubJson();
-        if (APP_DATA.editMode) {
-            stub.id = APP_DATA.stubId;
-            await Api.put(`${CTX}stubs/${APP_DATA.stubId}`, stub);
+        if (APPDATA.editMode) {
+            stub.id = APPDATA.stubId;
+            await Api.put(`${CTX}stubs/${APPDATA.stubId}`, stub);
         } else {
             await Api.post(CTX + 'stubs', stub);
         }
-        if (!APP_DATA.editMode && document.getElementById('wCreateProxy').checked) {
+        if (!APPDATA.editMode && document.getElementById('wCreateProxy').checked) {
             const proxyUrl = document.getElementById('wProxyUrl').value.trim();
             if (proxyUrl) await Api.post(CTX + 'stubs', buildProxyJson(stub));
         }
-        Toast.show(APP_DATA.editMode ? 'Стаб обновлён!' : 'Стаб создан!', 'success');
+        Toast.show(APPDATA.editMode ? 'Стаб обновлён!' : 'Стаб создан!', 'success');
         setTimeout(() => location.assign(CTX + 'stubs'), 1000);
     } catch (e) {
         Toast.show('Ошибка: ' + e.message, 'danger');
@@ -831,7 +837,7 @@ function prefillWizard(stub) {
     updateBodyPatternsVisibility(method);
 
     // Edit mode + bodyPatterns при несовместимом методе
-    if (APP_DATA.editMode && METHODS_NO_BODY.includes(method) && req.bodyPatterns?.length) {
+    if (APPDATA.editMode && METHODS_NO_BODY.includes(method) && req.bodyPatterns?.length) {
         const warn = document.getElementById('bodyPatternsEditWarning');
         warn.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>
             Метод <strong>${escHtml(method)}</strong> не поддерживает Body Patterns.

@@ -365,22 +365,8 @@
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    const APP_DATA = {
-        wiremockHost: /*[[${wiremockHost}]]*/ '',
-        clients:      /*[[${clients}]]*/ [],
-        editMode:     /*[[${editMode}]]*/ false,
-        cloneMode:    /*[[${cloneMode}]]*/ false,
-        stubId:       /*[[${stubId}]]*/ null,
-        stub:         /*[[${stubJson}]]*/ null
-    };
-    if (APP_DATA.stub && APP_DATA.stub !== 'null') {
-        try { APP_DATA.stub = JSON.parse(APP_DATA.stub); }
-        catch(e) { APP_DATA.stub = null; }
-    }
-    /*]]>*/
-</script>
+<script type="application/json" id="appdata" th:utext="${appDataJson}">null</script>
+
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/app.js}"></script>
 <script th:src="@{/js/wizard.js}"></script>

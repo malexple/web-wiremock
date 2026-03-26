@@ -222,14 +222,8 @@
 <!-- Toast container -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 
-<script th:inline="javascript">
-    const APPDATA = {
-        proxyStubs:    /*[[${proxyStubs}]]*/[],
-        clients:       /*[[${clients}]]*/[],
-        profiles:      /*[[${profiles}]]*/[],
-        currentStatus: /*[[${currentStatus}]]*/'NeverStarted'
-    };
-</script>
+<script type="application/json" id="appdata" th:utext="${appDataJson}">null</script>
+
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/app.js}"></script>
 <script th:src="@{/js/recording.js}"></script>

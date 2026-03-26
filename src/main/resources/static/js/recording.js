@@ -1,5 +1,7 @@
 'use strict';
 
+const APPDATA = JSON.parse(document.getElementById('appdata').textContent);
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let allRecordedStubs = [];
 let pollTimer        = null;

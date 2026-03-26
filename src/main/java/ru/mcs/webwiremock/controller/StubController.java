@@ -23,8 +23,11 @@ import ru.mcs.webwiremock.dto.ui.ClientInfo;
 import ru.mcs.webwiremock.dto.wiremock.StubMapping;
 import ru.mcs.webwiremock.service.ApiTreeService;
 import ru.mcs.webwiremock.service.StubService;
+import ru.mcs.webwiremock.util.JsonUtil;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -32,10 +35,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StubController {
 
-    private final StubService stubService;
-    private final ApiTreeService apiTreeService;
+    private final StubService        stubService;
+    private final ApiTreeService     apiTreeService;
     private final WiremockProperties wiremockProperties;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper       objectMapper;
+    private final JsonUtil jsonUtil;
 
     @GetMapping
     public String stubsPage(
@@ -45,11 +49,8 @@ public class StubController {
             Model model) {
 
         List<StubMapping> allStubs = stubService.getAllStubs();
-        List<StubMapping> stubs = (clientId != null && !clientId.isBlank())
-                || (urlPath != null && !urlPath.isBlank())
-                ? stubService.filterStubs(clientId, urlPath)
-                : allStubs;
-
+        List<StubMapping> stubs = clientId != null && !clientId.isBlank() || urlPath != null && !urlPath.isBlank()
+                ? stubService.filterStubs(clientId, urlPath) : allStubs;
         List<String> allPaths = allStubs.stream()
                 .map(s -> apiTreeService.extractEffectivePath(s.getRequest()))
                 .filter(p -> p != null && !p.equals("/"))
@@ -57,14 +58,25 @@ public class StubController {
                 .sorted()
                 .toList();
 
-        model.addAttribute("tree", stubService.buildStubTree(stubs));
-        model.addAttribute("clients", stubService.getClients());
-        model.addAttribute("allPaths", allPaths);
+        model.addAttribute("tree",             stubService.buildStubTree(stubs));
+        model.addAttribute("clients",          stubService.getClients());
+        model.addAttribute("allPaths",         allPaths);
         model.addAttribute("selectedClientId", clientId);
-        model.addAttribute("selectedUrlPath", urlPath);
-        model.addAttribute("selectedStubId", selectedId);
-        model.addAttribute("wiremockHost", wiremockProperties.getWiremockHost());
-        model.addAttribute("totalStubs", stubs.size());
+        model.addAttribute("selectedUrlPath",  urlPath);
+        model.addAttribute("selectedStubId",   selectedId);
+        model.addAttribute("wiremockHost",     wiremockProperties.getWiremockHost());
+        model.addAttribute("totalStubs",       stubs.size());
+
+        Map<String, Object> appData = new LinkedHashMap<>();
+        appData.put("tree",             stubService.buildStubTree(stubs));
+        appData.put("clients",          stubService.getClients());
+        appData.put("allPaths",         allPaths);
+        appData.put("wiremockHost",     wiremockProperties.getWiremockHost());
+        appData.put("selectedStubId",   selectedId);
+        appData.put("selectedClientId", clientId);
+        appData.put("selectedUrlPath",  urlPath);
+        model.addAttribute("appDataJson", jsonUtil.toHtmlSafeJson(appData));
+
         return "stubs/index";
     }
 
@@ -95,28 +107,49 @@ public class StubController {
     }
 
     /** Wizard для создания нового стаба */
-    @GetMapping("/wizard")
+    // Wizard
+    @GetMapping("wizard")
     public String wizardPage(Model model) {
-        model.addAttribute("clients", stubService.getClients());
+        model.addAttribute("clients",      stubService.getClients());
         model.addAttribute("wiremockHost", wiremockProperties.getWiremockHost());
-        model.addAttribute("editMode", false);
-        model.addAttribute("cloneMode", false);
-        model.addAttribute("stubJson", "null");
-        model.addAttribute("stubId", "null");
+        model.addAttribute("editMode",     false);
+        model.addAttribute("cloneMode",    false);
+        model.addAttribute("stubJson",     null);
+        model.addAttribute("stubId",       null);
+
+        Map<String, Object> appData = new LinkedHashMap<>();
+        appData.put("wiremockHost", wiremockProperties.getWiremockHost());
+        appData.put("clients",      stubService.getClients());
+        appData.put("editMode",     false);
+        appData.put("cloneMode",    false);
+        appData.put("stubId",       null);
+        appData.put("stub",         null);
+        model.addAttribute("appDataJson", jsonUtil.toHtmlSafeJson(appData));
+
         return "stubs/wizard";
     }
 
     /** Wizard для редактирования существующего стаба */
-    @GetMapping("/{id}/edit")
-    public String editStubPage(@PathVariable String id, Model model)
-            throws JsonProcessingException {
+    // Wizard
+    @GetMapping("{id}/edit")
+    public String editStubPage(@PathVariable String id, Model model) throws JsonProcessingException {
         StubMapping stub = stubService.getStubById(id);
-        model.addAttribute("clients", stubService.getClients());
+        model.addAttribute("clients",      stubService.getClients());
         model.addAttribute("wiremockHost", wiremockProperties.getWiremockHost());
-        model.addAttribute("editMode", true);
-        model.addAttribute("cloneMode", false);
-        model.addAttribute("stubJson", objectMapper.writeValueAsString(stub));
-        model.addAttribute("stubId", id);
+        model.addAttribute("editMode",     true);
+        model.addAttribute("cloneMode",    false);
+        model.addAttribute("stubJson",     objectMapper.writeValueAsString(stub));
+        model.addAttribute("stubId",       id);
+
+        Map<String, Object> appData = new LinkedHashMap<>();
+        appData.put("wiremockHost", wiremockProperties.getWiremockHost());
+        appData.put("clients",      stubService.getClients());
+        appData.put("editMode",     true);
+        appData.put("cloneMode",    false);
+        appData.put("stubId",       id);
+        appData.put("stub",         stub);
+        model.addAttribute("appDataJson", jsonUtil.toHtmlSafeJson(appData));
+
         return "stubs/wizard";
     }
 
@@ -124,41 +157,39 @@ public class StubController {
      * Wizard для клонирования стаба.
      * Передаём stubJson с очищенными id и clientId — пользователь заполнит сам.
      */
-    @GetMapping("/{id}/clone")
-    public String cloneStubPage(@PathVariable String id, Model model)
-            throws JsonProcessingException {
+    @GetMapping("{id}/clone")
+    public String cloneStubPage(@PathVariable String id, Model model) throws JsonProcessingException {
         StubMapping source = stubService.getStubById(id);
-
-        // Очищаем id — WireMock сгенерирует новый
+        // id WireMock
         source.setId(null);
-
-        // Очищаем клиентские данные — цель клонирования: создать для другого клиента
-        if (source.getMetadata() != null) {
-            source.getMetadata().setClientId(null);
-            source.getMetadata().setClientName(null);
-        }
-        if (source.getRequest() != null) {
-            source.getRequest().setCustomMatcher(null);
-        }
-
-        // Добавляем суффикс к имени чтобы отличить от оригинала
-        if (source.getName() != null) {
-            source.setName(source.getName() + " (копия)");
-        }
-
-        model.addAttribute("clients", stubService.getClients());
+        model.addAttribute("clients",      stubService.getClients());
         model.addAttribute("wiremockHost", wiremockProperties.getWiremockHost());
-        model.addAttribute("editMode", false);
-        model.addAttribute("cloneMode", true);
-        model.addAttribute("stubJson", objectMapper.writeValueAsString(source));
-        model.addAttribute("stubId", "null");
+        model.addAttribute("editMode",     false);
+        model.addAttribute("cloneMode",    true);
+        model.addAttribute("stubJson",     objectMapper.writeValueAsString(source));
+        model.addAttribute("stubId",       null);
+
+        Map<String, Object> appData = new LinkedHashMap<>();
+        appData.put("wiremockHost", wiremockProperties.getWiremockHost());
+        appData.put("clients",      stubService.getClients());
+        appData.put("editMode",     false);
+        appData.put("cloneMode",    true);
+        appData.put("stubId",       null);
+        appData.put("stub",         source);
+        model.addAttribute("appDataJson", jsonUtil.toHtmlSafeJson(appData));
+
         return "stubs/wizard";
     }
 
     /** Страница импорта из OpenAPI */
-    @GetMapping("/openapi-import")
+    @GetMapping("openapi-import")
     public String openApiImportPage(Model model) {
         model.addAttribute("wiremockHost", wiremockProperties.getWiremockHost());
+
+        Map<String, Object> appData = new LinkedHashMap<>();
+        appData.put("wiremockHost", wiremockProperties.getWiremockHost());
+        model.addAttribute("appDataJson", jsonUtil.toHtmlSafeJson(appData));
+
         return "stubs/openapi-import";
     }
 }

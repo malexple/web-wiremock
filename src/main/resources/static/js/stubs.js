@@ -1,5 +1,6 @@
 'use strict';
 
+const APPDATA = JSON.parse(document.getElementById('appdata').textContent);
 // ─── State ────────────────────────────────────────────────────
 let currentStubId = null;
 let proxyModalInst = null;
@@ -7,7 +8,7 @@ let proxyModalInst = null;
 // ─── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     initSplitter('treeSplitter', 'treeSidebar');
-    renderTree(APP_DATA.tree);
+    renderTree(APPDATA.tree);
     initTabSwitcher();
     initStubButtons();
     initRunTest();
@@ -21,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         () => document.querySelectorAll('.tree-children:not(.d-none)')
                       .forEach(el => el.classList.add('d-none')));
 
-    if (APP_DATA.selectedStubId) selectStub(APP_DATA.selectedStubId);
+    if (APPDATA.selectedStubId) selectStub(APPDATA.selectedStubId);
 });
 
 // ─── Tree render ──────────────────────────────────────────────
@@ -134,7 +135,7 @@ function showStubPanel(stub) {
     const rtMethod = document.getElementById('rtMethod');
     rtMethod.value = ['GET','POST','PUT','DELETE','PATCH','HEAD','OPTIONS'].includes(method)
         ? method : 'GET';
-    document.getElementById('rtUrl').value = APP_DATA.wiremockHost + path;
+    document.getElementById('rtUrl').value = APPDATA.wiremockHost + path;
 
     // Скрываем ответ от предыдущего теста
     document.getElementById('rtResponseSection').classList.add('d-none');
