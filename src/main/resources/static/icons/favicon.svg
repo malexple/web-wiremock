@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="256" height="256">
+    <!-- Дно коробки -->
+    <polygon
+            points="50,55 10,35 10,75 50,95 90,75 90,35"
+            fill="#0d3b47"
+            stroke="#FFC107"
+            stroke-width="2.5"
+            stroke-linejoin="round"
+    />
+    <!-- Левая грань -->
+    <polygon
+            points="10,35 50,55 50,95 10,75"
+            fill="#212529"
+            stroke="#FFC107"
+            stroke-width="2.5"
+            stroke-linejoin="round"
+    />
+    <!-- Правая грань -->
+    <polygon
+            points="90,35 50,55 50,95 90,75"
+            fill="#212529"
+            stroke="#FFC107"
+            stroke-width="2.5"
+            stroke-linejoin="round"
+    />
+    <!-- Крышка верх -->
+    <polygon
+            points="50,10 10,30 50,50 90,30"
+            fill="#212529"
+            stroke="#FFC107"
+            stroke-width="2.5"
+            stroke-linejoin="round"
+    />
+    <!-- Лента на крышке -->
+    <line x1="50" y1="10" x2="50" y2="50" stroke="#FFC107" stroke-width="2" opacity="0.5"/>
+    <line x1="10" y1="30" x2="90" y2="30" stroke="#FFC107" stroke-width="2" opacity="0.5"/>
+    <!-- WM text -->
+    <text
+            x="49" y="42"
+            font-family="Roboto, Arial, sans-serif"
+            font-size="30"
+            font-weight="bold"
+            text-anchor="middle"
+            fill="#ffffff"
+            opacity="0.9"
+            letter-spacing="-0.5"
+    >W</text>
+    <text
+            x="30" y="77"
+            font-family="Roboto, Arial, sans-serif"
+            font-size="30"
+            font-weight="bold"
+            text-anchor="middle"
+            fill="#ffffff"
+            opacity="0.9"
+            letter-spacing="-0.5"
+    >W</text>
+    <text
+            x="68" y="77"
+            font-family="Roboto, Arial, sans-serif"
+            font-size="30"
+            font-weight="bold"
+            text-anchor="middle"
+            fill="#ffffff"
+            opacity="0.9"
+            letter-spacing="-0.5"
+    >M</text>
+</svg>
