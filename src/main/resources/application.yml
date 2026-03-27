@@ -1,7 +1,7 @@
 server:
   port: 8080
   servlet:
-    context-path: ${APP_CONTEXT_PATH:/wiremock-web}
+    context-path: ${APP_CONTEXT_PATH:/}
 spring:
   application:
     name: web-wiremock
