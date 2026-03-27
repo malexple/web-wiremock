@@ -2,10 +2,6 @@
 
 const APPDATA = JSON.parse(document.getElementById('appdata').textContent);
 
-if (APPDATA.editMode || APPDATA.cloneMode || APPDATA.stub) {
-    prefillWizard(APPDATA.stub);
-}
-
 const TOTAL_STEPS = 5;
 let currentStep = 0;
 

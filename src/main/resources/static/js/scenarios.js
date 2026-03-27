@@ -55,7 +55,7 @@ function selectScenario(name) {
 // ─── Загрузка деталей ─────────────────────────────────────────
 async function loadScenarioDetail(name) {
     try {
-        const data = await Api.get(`/scenarios/${encodeURIComponent(name)}/state`);
+        const data = await Api.get(CTX + `scenarios/${encodeURIComponent(name)}/state`);
         renderDetail(data);
         updateListCard(data);
     } catch (e) {
@@ -222,7 +222,7 @@ function initButtons() {
         if (!currentScenarioName) return;
         if (!confirm(`Удалить сценарий '${currentScenarioName}' и все его стабы?`)) return;
         try {
-            await Api.delete(`/scenarios/${encodeURIComponent(currentScenarioName)}`);
+            await Api.delete(CTX + `scenarios/${encodeURIComponent(currentScenarioName)}`);
             Toast.show(`Сценарий '${currentScenarioName}' удалён`, 'success');
             document.querySelector(
                 `.scenario-item[data-name="${CSS.escape(currentScenarioName)}"]`)?.remove();
@@ -533,7 +533,7 @@ async function submitNewScenario() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Создаём...';
 
     try {
-        await Api.post(CTX + 'cenarios', { scenarioName: name, externalId, steps });
+        await Api.post(CTX + 'scenarios', { scenarioName: name, externalId, steps });
         newScenarioModalInst.hide();
         Toast.show(`Сценарий '${name}' создан (${steps.length} шагов)`, 'success');
         setTimeout(() => location.reload(), 800);
@@ -550,8 +550,7 @@ function startPolling() {
     pollingTimer = setInterval(async () => {
         if (!currentScenarioName) return;
         try {
-            const data = await Api.get(CTX +
-                `scenarios/${encodeURIComponent(currentScenarioName)}/state`);
+            const data = await Api.get(CTX + `scenarios/${encodeURIComponent(currentScenarioName)}/state`);
             renderDetail(data);
             updateListCard(data);
         } catch { /* тихо */ }
@@ -561,7 +560,7 @@ function startPolling() {
 // ─── Helpers ──────────────────────────────────────────────────
 async function setStateAndRefresh(state) {
     try {
-        await Api.put(`/scenarios/${encodeURIComponent(currentScenarioName)}/state`, { state });
+        await Api.put(CTX + `scenarios/${encodeURIComponent(currentScenarioName)}/state`, { state });
         await loadScenarioDetail(currentScenarioName);
     } catch (e) { Toast.show(e.message, 'danger'); }
 }
